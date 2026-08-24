@@ -1,13 +1,65 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    
-    <h1>Login</h1>
+<div class="dark min-h-screen w-full flex items-center justify-center bg-surface-950 p-4 relative overflow-hidden">
+<!-- rayo de fondo, muy sutil, refuerza marca sin competir con el formulario -->
+<svg class="absolute -right-24 -top-24 height: 520px; width: 520px; rotate-12 opacity-[0.04]" viewBox="0 0 100 100" fill="none">
+    <path d="M55 2 L18 55 H45 L38 98 L82 40 H52 Z" fill="#F5A623" />
+</svg>
 
-</body>
-</html>
+<div class="w-full max-w-sm relative">
+    <div class="login-card">
+    <div class="mb-5 flex items-center justify-center gap-0">
+        <svg class="w-8 h-8 shrink-0" viewBox="0 0 24 24" fill="none">
+        <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#F5A623" />
+        </svg>
+        <h1 class="font-black tracking-tight uppercase text-2xl text-surface-0 leading-none">
+        ULTRATECH
+        </h1>
+    </div>
+    
+    <p class="text-sm text-center text-surface-400 mb-6 tracking-wide">
+        SISTEMA DE GESTIÓN DE FITNESS
+    </p>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
+        <div class="flex justify-center">
+            <p-floatlabel>
+                <input
+                id="username"
+                pInputText
+                formControlName="username"
+                autocomplete="username"
+                class="w-full"
+                />
+                <label for="username">Username</label>
+            </p-floatlabel>
+        </div>
+
+        <div class="flex justify-center">
+            <p-floatlabel>
+                <p-iconfield>
+                    <input
+                    id="password"
+                    pInputPassword
+                    formControlName="password"
+                    [(mask)]="mask"
+                    autocomplete="current-password"
+                    class="w-full"
+                    />
+                    <p-inputicon (click)="mask = !mask" class="cursor-pointer">
+                        <i [class]="mask ? 'pi pi-eye' : 'pi pi-eye-slash'"></i>
+                    </p-inputicon>
+                </p-iconfield>
+                <label for="password">Contraseña</label>
+            </p-floatlabel>
+        </div>
+
+        <button
+            pButton
+            type="submit"
+            [disabled]="form.invalid || loading()"
+            class="mt-1 w-full justify-center border-[#f5a623]! bg-[#f5a623]! text-black hover:border-[#d88912]! hover:bg-[#d88912]!">
+            Ingresar
+        </button>
+    </form>
+    </div>
+</div>
+</div>

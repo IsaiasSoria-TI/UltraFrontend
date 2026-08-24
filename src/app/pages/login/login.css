@@ -1,0 +1,35 @@
+.login-card {
+    border: 1px solid #525252;
+    border-radius: 0.75rem;
+    background-color: #262626;
+    padding: 2.5rem 2rem 2rem;
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 25%);
+}
+
+:host ::ng-deep .p-floatlabel input {
+    width: 100%;
+    border: 2px solid #000000;
+    background-color: #ffffff;
+    color: #000000;
+}
+
+:host ::ng-deep .p-floatlabel input:focus {
+    border-color: #000000;
+    background-color: #ffffff;
+    box-shadow: none;
+}
+
+:host ::ng-deep #password:focus {
+    color: #000000;
+}
+
+:host ::ng-deep .p-floatlabel:has(input:focus) label {
+    color: #000000;
+}
+
+:host ::ng-deep .p-floatlabel,
+:host ::ng-deep .p-iconfield,
+:host ::ng-deep .p-iconfield input,
+:host ::ng-deep .p-button {
+    width: 100%;
+}
