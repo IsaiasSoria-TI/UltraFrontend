@@ -1,5 +1,5 @@
 // login.component.ts
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
@@ -10,6 +10,9 @@ import { MessageModule } from 'primeng/message';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { FloatLabelModule } from 'primeng/floatlabel';
+import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
 selector: 'app-login',
@@ -31,6 +34,8 @@ styleUrls: ['./login.css'],
 })
 export class LoginComponent {
 private fb = new FormBuilder();
+private authService = inject(AuthService);
+private router = inject(Router);
 loading = signal(false);
 errorMessage = signal<string | null>(null);
 
@@ -42,15 +47,28 @@ form = this.fb.group({
 
 mask = true;
 
-onSubmit() {
-    if (this.form.invalid) return;
+async onSubmit() {
+    if (this.form.invalid) {
+        this.form.markAllAsTouched();
+        this.errorMessage.set('Rellena los campos obligatorios');
+        return;
+    }
+
     this.loading.set(true);
     this.errorMessage.set(null);
 
-    // Reemplaza esto con tu llamada real de autenticación
-    setTimeout(() => {
-    this.loading.set(false);
+    const { username, password } = this.form.getRawValue();
+
+    try {
+    await firstValueFrom(this.authService.login({
+        username: username ?? '',
+        password: password ?? '',
+    }));
+    await this.router.navigate(['/dashboard']);
+    } catch {
     this.errorMessage.set('Usuario o contraseña incorrectos.');
-    }, 1200);
+    } finally {
+    this.loading.set(false);
+    }
 }
 }

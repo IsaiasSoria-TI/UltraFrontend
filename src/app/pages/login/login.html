@@ -16,7 +16,7 @@
     </div>
     
     <p class="text-sm text-center text-surface-400 mb-6 tracking-wide">
-        SISTEMA DE GESTIÓN DE FITNESS
+        SISTEMA DE GESTIÓN FITNESS
     </p>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
@@ -52,12 +52,16 @@
             </p-floatlabel>
         </div>
 
+        @if (errorMessage()) {
+            <p-message severity="error">{{ errorMessage() }}</p-message>
+        }
+
         <button
-            pButton
-            type="submit"
-            [disabled]="form.invalid || loading()"
-            class="mt-1 w-full justify-center border-[#f5a623]! bg-[#f5a623]! text-black hover:border-[#d88912]! hover:bg-[#d88912]!">
-            Ingresar
+        pButton
+        type="submit"
+        [disabled]="loading()"
+        class="mt-1 w-full justify-center border-[#e2b87500]! bg-[#f5a623]! text-black! hover:border-[#d88912]! hover:bg-[#d88912]!">
+        Ingresar
         </button>
     </form>
     </div>
