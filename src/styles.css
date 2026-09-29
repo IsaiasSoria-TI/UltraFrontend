@@ -2,3 +2,6 @@
 
 @import 'tailwindcss';
 @import 'primeicons/primeicons.css';
+
+/* dark: se activa con la clase .dark (la misma que usa PrimeNG), no con la preferencia del sistema */
+@custom-variant dark (&:where(.dark, .dark *));

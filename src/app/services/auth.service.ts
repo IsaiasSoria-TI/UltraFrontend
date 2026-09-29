@@ -5,6 +5,12 @@ import { LoginRequest, LoginResponse } from '../models/login.model';
 
 const TOKEN_KEY = 'auth_token';
 
+interface TokenPayload {
+	sub?: string;
+	rol?: string;
+	id_usuario?: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 	private readonly http = inject(HttpClient);
@@ -30,5 +36,33 @@ export class AuthService {
 
 	isLoggedIn(): boolean {
 		return !!this.getToken();
+	}
+
+	getUsername(): string {
+		return this.getPayload()?.sub ?? '';
+	}
+
+	getRol(): string {
+		return this.getPayload()?.rol ?? '';
+	}
+
+	// Solo lee los claims para mostrarlos; la firma la valida el backend
+	private getPayload(): TokenPayload | null {
+		const token = this.getToken();
+		if (!token) {
+			return null;
+		}
+		try {
+			const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+			const json = decodeURIComponent(
+				atob(base64)
+					.split('')
+					.map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
+					.join(''),
+			);
+			return JSON.parse(json) as TokenPayload;
+		} catch {
+			return null;
+		}
 	}
 }

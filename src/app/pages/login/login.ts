@@ -33,6 +33,12 @@ templateUrl: './login.html',
 styleUrls: ['./login.css'],
 })
 export class LoginComponent {
+
+showError(message: string, duration = 3000): void {
+this.errorMessage.set(message);
+setTimeout(() => {this.errorMessage.set(null);}, duration);
+}
+
 private fb = new FormBuilder();
 private authService = inject(AuthService);
 private router = inject(Router);
@@ -50,7 +56,7 @@ mask = true;
 async onSubmit() {
     if (this.form.invalid) {
         this.form.markAllAsTouched();
-        this.errorMessage.set('Rellena los campos obligatorios');
+        this.showError('Rellena los campos obligatorios');
         return;
     }
 
@@ -65,7 +71,7 @@ async onSubmit() {
         password: password ?? '',
     }));
     await this.router.navigate(['/dashboard']);
-    } catch {
+    } catch (error) {
     this.errorMessage.set('Usuario o contraseña incorrectos.');
     } finally {
     this.loading.set(false);

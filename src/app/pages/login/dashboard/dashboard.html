@@ -1,0 +1,269 @@
+<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+  @if (error()) {
+    <p-message severity="error" class="block w-full">
+      <span class="flex flex-wrap items-center gap-3">
+        {{ error() }}
+        <button type="button" class="cursor-pointer font-semibold underline" (click)="cargar()">Reintentar</button>
+      </span>
+    </p-message>
+  }
+
+  @if (loading() && !resumen()) {
+    <!-- Carga inicial -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="rounded-xl border border-gray-200 p-5 dark:border-zinc-800">
+          <p-skeleton width="40%" height="0.9rem" class="mb-4" />
+          <p-skeleton width="60%" height="2rem" class="mb-3" />
+          <p-skeleton width="50%" height="0.8rem" />
+        </div>
+      }
+    </div>
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <p-skeleton height="18rem" class="lg:col-span-2 rounded-xl!" />
+      <p-skeleton height="18rem" class="rounded-xl!" />
+    </div>
+  } @else if (resumen(); as r) {
+    <!-- KPIs -->
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicadores">
+      <article class="rounded-xl border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 p-5 shadow-xs">
+        <div class="flex items-start justify-between">
+          <p class="text-sm font-medium text-gray-500 dark:text-zinc-400">Clientes activos</p>
+          <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300">
+            <i class="pi pi-users"></i>
+          </span>
+        </div>
+        <p class="mt-2 text-3xl font-bold tabular-nums text-gray-900 dark:text-zinc-100">{{ r.clientesActivos }}</p>
+        <p class="mt-1 text-xs text-gray-500 dark:text-zinc-400">Registrados con estado activo</p>
+      </article>
+
+      <article class="rounded-xl border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 p-5 shadow-xs">
+        <div class="flex items-start justify-between">
+          <p class="text-sm font-medium text-gray-500 dark:text-zinc-400">Membresías activas</p>
+          <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300">
+            <i class="pi pi-id-card"></i>
+          </span>
+        </div>
+        <p class="mt-2 text-3xl font-bold tabular-nums text-gray-900 dark:text-zinc-100">{{ r.membresiasActivas }}</p>
+        <p class="mt-1 text-xs text-gray-500 dark:text-zinc-400">
+          {{ r.membresiasProgramadas }} programada{{ r.membresiasProgramadas === 1 ? '' : 's' }} por iniciar
+        </p>
+      </article>
+
+      <article class="rounded-xl border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 p-5 shadow-xs">
+        <div class="flex items-start justify-between">
+          <p class="text-sm font-medium text-gray-500 dark:text-zinc-400">Ventas de hoy</p>
+          <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300">
+            <i class="pi pi-shopping-cart"></i>
+          </span>
+        </div>
+        <p class="mt-2 text-3xl font-bold tabular-nums text-gray-900 dark:text-zinc-100">{{ r.ventasHoyTotal | currency: 'PEN' : 'symbol-narrow' }}</p>
+        <p class="mt-1 text-xs text-gray-500 dark:text-zinc-400">
+          {{ r.ventasHoyCantidad }} venta{{ r.ventasHoyCantidad === 1 ? '' : 's' }} de productos
+        </p>
+      </article>
+
+      <article class="rounded-xl border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 p-5 shadow-xs">
+        <div class="flex items-start justify-between">
+          <p class="text-sm font-medium text-gray-500 dark:text-zinc-400">Caja</p>
+          <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300">
+            <i class="pi pi-wallet"></i>
+          </span>
+        </div>
+        @if (r.caja; as caja) {
+          <div class="mt-2 flex items-center gap-2">
+            <p-tag severity="success" value="Abierta" icon="pi pi-lock-open" />
+          </div>
+          <p class="mt-2 text-xs text-gray-500 dark:text-zinc-400">
+            Desde las {{ caja.fechaApertura | date: 'HH:mm' }} · {{ caja.usuario }}<br />
+            Monto inicial {{ caja.montoInicial | currency: 'PEN' : 'symbol-narrow' }}
+          </p>
+        } @else {
+          <div class="mt-2 flex items-center gap-2">
+            <p-tag severity="secondary" value="Cerrada" icon="pi pi-lock" />
+          </div>
+          <p class="mt-2 text-xs text-gray-500 dark:text-zinc-400">Abre la caja para registrar ventas y membresías.</p>
+        }
+      </article>
+    </section>
+
+    <!-- Gráfico + por vencer -->
+    <section class="grid grid-cols-1 gap-4 lg:flex-1 lg:grid-cols-3">
+      <article class="rounded-xl border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 p-5 shadow-xs lg:col-span-2 flex flex-col">
+        <div class="mb-6 flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h2 class="text-base font-semibold text-gray-900 dark:text-zinc-100">Ventas de productos</h2>
+            <p class="text-xs text-gray-500 dark:text-zinc-400">Últimos 7 días</p>
+          </div>
+          <p class="text-sm text-gray-500 dark:text-zinc-400">
+            Total <span class="font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ totalSemana() | currency: 'PEN' : 'symbol-narrow' }}</span>
+          </p>
+        </div>
+
+        <div class="relative h-64 lg:h-auto lg:min-h-64 lg:flex-1" aria-hidden="true">
+          <!-- Rejilla -->
+          <div class="pointer-events-none absolute inset-x-0 top-0 bottom-6 flex flex-col justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-14 shrink-0 text-right text-[0.68rem] tabular-nums text-gray-400 dark:text-zinc-500">
+                {{ maxVentaDia() | currency: 'PEN' : 'symbol-narrow' : '1.0-0' }}
+              </span>
+              <span class="h-px flex-1 bg-gray-100 dark:bg-zinc-800"></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-14 shrink-0"></span>
+              <span class="h-px flex-1 bg-gray-100 dark:bg-zinc-800"></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-14 shrink-0 text-right text-[0.68rem] tabular-nums text-gray-400 dark:text-zinc-500">S/ 0</span>
+              <span class="h-px flex-1 bg-gray-300 dark:bg-zinc-700"></span>
+            </div>
+          </div>
+
+          <!-- Barras -->
+          <div class="absolute inset-0 left-16 flex items-end gap-2 sm:gap-4">
+            @for (b of barras(); track b.fecha) {
+              <div class="group/bar relative flex h-full flex-1 flex-col items-center justify-end">
+                <div class="relative flex w-full flex-1 items-end justify-center pb-0 group-hover/bar:bg-gray-50 dark:group-hover/bar:bg-zinc-800/60 rounded-t-md" style="margin-bottom: 1.5rem">
+                  <div
+                    class="w-full max-w-9 rounded-t transition-[height] duration-500"
+                    [class]="b.esHoy ? 'bg-red-800 dark:bg-red-500' : 'bg-red-800/70 group-hover/bar:bg-red-800 dark:bg-red-500/60 dark:group-hover/bar:bg-red-500'"
+                    [style.height.%]="b.altura"
+                  ></div>
+                  <!-- Tooltip -->
+                  <div
+                    class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2.5 dark:bg-zinc-700 py-1.5 text-xs text-white shadow-lg group-hover/bar:block"
+                  >
+                    <p class="font-semibold tabular-nums">{{ b.total | currency: 'PEN' : 'symbol-narrow' }}</p>
+                    <p class="text-gray-300">{{ b.cantidad }} venta{{ b.cantidad === 1 ? '' : 's' }}</p>
+                  </div>
+                </div>
+                <span
+                  class="absolute bottom-0 text-[0.7rem] capitalize"
+                  [class]="b.esHoy ? 'font-semibold text-gray-900 dark:text-zinc-100' : 'text-gray-500 dark:text-zinc-400'"
+                >
+                  {{ b.esHoy ? 'Hoy' : (b.fecha + 'T00:00' | date: 'EEE d') }}
+                </span>
+              </div>
+            }
+          </div>
+
+          @if (maxVentaDia() === 0) {
+            <div class="absolute inset-0 left-16 bottom-6 flex items-center justify-center">
+              <p class="rounded-md bg-white px-3 dark:bg-zinc-900 py-1 text-sm text-gray-400 dark:text-zinc-500">Sin ventas en los últimos 7 días</p>
+            </div>
+          }
+        </div>
+
+        <!-- Vista de tabla para lectores de pantalla -->
+        <table class="sr-only">
+          <caption>Ventas de productos de los últimos 7 días</caption>
+          <thead><tr><th>Día</th><th>Total</th><th>Ventas</th></tr></thead>
+          <tbody>
+            @for (b of barras(); track b.fecha) {
+              <tr>
+                <td>{{ b.fecha + 'T00:00' | date: 'fullDate' }}</td>
+                <td>{{ b.total | currency: 'PEN' : 'symbol-narrow' }}</td>
+                <td>{{ b.cantidad }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </article>
+
+      <article class="flex flex-col rounded-xl border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 p-5 shadow-xs">
+        <div class="mb-4">
+          <h2 class="text-base font-semibold text-gray-900 dark:text-zinc-100">Membresías por vencer</h2>
+          <p class="text-xs text-gray-500 dark:text-zinc-400">Próximos 7 días</p>
+        </div>
+        @if (r.membresiasPorVencer.length) {
+          <ul class="divide-y divide-gray-100 dark:divide-zinc-800">
+            @for (m of r.membresiasPorVencer; track m.id) {
+              <li class="flex items-center justify-between gap-3 py-3">
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-medium text-gray-900 dark:text-zinc-100">{{ m.cliente }}</p>
+                  <p class="truncate text-xs text-gray-500 dark:text-zinc-400">{{ m.plan }} · {{ m.fechaFin | date: 'dd/MM/yyyy' }}</p>
+                </div>
+                <p-tag
+                  [severity]="m.diasRestantes <= 2 ? 'danger' : 'warn'"
+                  icon="pi pi-clock"
+                  [value]="textoVencimiento(m.diasRestantes)"
+                  class="shrink-0"
+                />
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="flex flex-1 flex-col items-center justify-center py-8 text-center">
+            <i class="pi pi-check-circle mb-2 text-2xl! text-gray-300 dark:text-zinc-600"></i>
+            <p class="text-sm text-gray-500 dark:text-zinc-400">Ninguna membresía vence esta semana.</p>
+          </div>
+        }
+      </article>
+    </section>
+
+    <!-- Últimas ventas + stock bajo -->
+    <section class="grid grid-cols-1 gap-4 lg:flex-1 lg:grid-cols-3">
+      <article class="rounded-xl border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 p-5 shadow-xs lg:col-span-2">
+        <h2 class="mb-4 text-base font-semibold text-gray-900 dark:text-zinc-100">Últimas ventas</h2>
+        <p-table [value]="r.ultimasVentas" [tableStyle]="{ 'min-width': '32rem' }" size="small">
+          <ng-template #header>
+            <tr>
+              <th>#</th>
+              <th>Cliente</th>
+              <th>Atendió</th>
+              <th>Fecha</th>
+              <th class="text-right!">Total</th>
+              <th>Estado</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-v>
+            <tr>
+              <td class="tabular-nums text-gray-500 dark:text-zinc-400">{{ v.id }}</td>
+              <td class="font-medium text-gray-900 dark:text-zinc-100">{{ v.cliente }}</td>
+              <td class="text-gray-600 dark:text-zinc-400">{{ v.usuario }}</td>
+              <td class="text-gray-600 dark:text-zinc-400">{{ v.fecha | date: 'dd/MM HH:mm' }}</td>
+              <td class="text-right! font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ v.total | currency: 'PEN' : 'symbol-narrow' }}</td>
+              <td>
+                <p-tag
+                  [severity]="v.estado === 'activa' ? 'success' : 'danger'"
+                  [value]="v.estado === 'activa' ? 'Activa' : 'Anulada'"
+                />
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="6" class="py-8! text-center! text-sm text-gray-500 dark:text-zinc-400">Aún no hay ventas registradas.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </article>
+
+      <article class="flex flex-col rounded-xl border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 p-5 shadow-xs">
+        <div class="mb-4">
+          <h2 class="text-base font-semibold text-gray-900 dark:text-zinc-100">Stock bajo</h2>
+          <p class="text-xs text-gray-500 dark:text-zinc-400">Productos con 5 unidades o menos</p>
+        </div>
+        @if (r.productosStockBajo.length) {
+          <ul class="divide-y divide-gray-100 dark:divide-zinc-800">
+            @for (p of r.productosStockBajo; track p.id) {
+              <li class="flex items-center justify-between gap-3 py-3">
+                <p class="truncate text-sm font-medium text-gray-900 dark:text-zinc-100">{{ p.nombre }}</p>
+                @if (p.stock === 0) {
+                  <p-tag severity="danger" icon="pi pi-times-circle" value="Agotado" class="shrink-0" />
+                } @else {
+                  <p-tag severity="warn" icon="pi pi-exclamation-triangle" [value]="p.stock + ' uds.'" class="shrink-0" />
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="flex flex-1 flex-col items-center justify-center py-8 text-center">
+            <i class="pi pi-box mb-2 text-2xl! text-gray-300 dark:text-zinc-600"></i>
+            <p class="text-sm text-gray-500 dark:text-zinc-400">Todos los productos tienen stock suficiente.</p>
+          </div>
+        }
+      </article>
+    </section>
+  }
+</div>

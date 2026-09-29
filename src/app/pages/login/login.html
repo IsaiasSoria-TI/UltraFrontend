@@ -21,10 +21,9 @@
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
         <div class="flex justify-center">
-            <p-floatlabel>
-                <input
+            <p-floatlabel variant="on">
+                <input pInputText
                 id="username"
-                pInputText
                 formControlName="username"
                 autocomplete="username"
                 class="w-full"
@@ -36,7 +35,7 @@
         <div class="flex justify-center">
             <p-floatlabel>
                 <p-iconfield>
-                    <input
+                    <input 
                     id="password"
                     pInputPassword
                     formControlName="password"

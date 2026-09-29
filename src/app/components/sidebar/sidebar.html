@@ -1,0 +1,101 @@
+<!-- Colapsado: solo iconos (4.5rem). Al pasar el cursor (o navegar con teclado) se expande sobre el contenido. -->
+<nav
+  aria-label="Menú principal"
+  class="group fixed left-0 top-0 z-50 flex h-screen w-18 flex-col overflow-hidden bg-red-900 text-red-100 dark:bg-red-950 shadow-lg transition-[width] duration-300 ease-in-out hover:w-64 focus-within:w-64"
+>
+  <!-- Marca -->
+  <div class="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-5">
+    <svg class="h-8 w-8 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#F5A623" />
+    </svg>
+    <span
+      class="whitespace-nowrap text-lg font-black uppercase tracking-tight text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100"
+    >
+      Ultratech
+    </span>
+  </div>
+
+  <!-- Navegación -->
+  <div class="sidebar-scroll flex-1 overflow-y-auto overflow-x-hidden py-3">
+    @for (section of sections; track section.titulo) {
+      <div class="mb-2">
+        <div class="relative flex h-7 items-center px-6">
+          <span class="absolute inset-x-5 top-1/2 h-px bg-white/10 transition-opacity duration-200 group-hover:opacity-0 group-focus-within:opacity-0"></span>
+          <span
+            class="whitespace-nowrap text-[0.68rem] font-semibold uppercase tracking-widest text-red-300/70 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100"
+          >
+            {{ section.titulo }}
+          </span>
+        </div>
+
+        <ul class="flex flex-col gap-0.5 px-3">
+          @for (item of section.items; track item.route) {
+            <li>
+              @if (item.disponible) {
+                <a
+                  [routerLink]="item.route"
+                  routerLinkActive="bg-white/15! text-white! before:opacity-100!"
+                  [attr.title]="item.label"
+                  class="relative flex h-11 items-center gap-4 rounded-lg px-3.5 text-red-100/90 no-underline transition-colors duration-150 before:absolute before:-left-3 before:top-2 before:h-7 before:w-1 before:rounded-r before:bg-white before:opacity-0 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-white/60"
+                >
+                  <i [class]="item.icon + ' w-5 shrink-0 text-center text-lg!'"></i>
+                  <span class="whitespace-nowrap text-sm font-medium opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+                    {{ item.label }}
+                  </span>
+                </a>
+              } @else {
+                <span
+                  [attr.title]="item.label + ' (próximamente)'"
+                  aria-disabled="true"
+                  class="flex h-11 cursor-not-allowed items-center gap-4 rounded-lg px-3.5 text-red-100/45"
+                >
+                  <i [class]="item.icon + ' w-5 shrink-0 text-center text-lg!'"></i>
+                  <span class="flex flex-1 items-center justify-between gap-2 whitespace-nowrap text-sm opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+                    {{ item.label }}
+                    <p-tag value="Pronto" [rounded]="true" class="bg-white/10! text-red-200! text-[0.6rem]! font-medium! px-2! py-0!" />
+                  </span>
+                </span>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </div>
+
+  <!-- Usuario -->
+  <div class="shrink-0 border-t border-white/10 p-3">
+    <div class="flex items-center gap-3 rounded-lg px-1.5 py-2">
+      <p-avatar
+        [label]="iniciales"
+        shape="circle"
+        class="shrink-0 bg-white! text-red-900! font-bold!"
+      />
+      <div class="min-w-0 flex-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+        <p class="truncate text-sm font-semibold text-white">{{ username }}</p>
+        <p class="truncate text-xs text-red-200/70">{{ rol }}</p>
+      </div>
+      <button
+        type="button"
+        (click)="themeService.toggle()"
+        [attr.aria-label]="themeService.dark() ? 'Activar modo claro' : 'Activar modo oscuro'"
+        [attr.title]="themeService.dark() ? 'Modo claro' : 'Modo oscuro'"
+        [attr.aria-pressed]="themeService.dark()"
+        class="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-red-100/90 opacity-0 transition-[opacity,background-color] duration-200 hover:bg-white/10 hover:text-white focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-white/60 group-hover:opacity-100 group-focus-within:opacity-100"
+      >
+        <i [class]="themeService.dark() ? 'pi pi-sun' : 'pi pi-moon'"></i>
+      </button>
+    </div>
+    <button
+      type="button"
+      (click)="logout()"
+      title="Cerrar sesión"
+      class="mt-1 flex h-11 w-full cursor-pointer items-center gap-4 rounded-lg px-3.5 text-red-100/90 transition-colors duration-150 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-white/60"
+    >
+      <i class="pi pi-sign-out w-5 shrink-0 text-center text-lg!"></i>
+      <span class="whitespace-nowrap text-sm font-medium opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+        Cerrar sesión
+      </span>
+    </button>
+  </div>
+</nav>
