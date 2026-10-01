@@ -46,6 +46,12 @@ export class AuthService {
 		return this.getPayload()?.rol ?? '';
 	}
 
+	// Anular ventas y cancelar membresías (el backend vuelve a validarlo)
+	esAdministrador(): boolean {
+		const rol = this.getRol().normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+		return rol === 'ADMINISTRADOR' || rol === 'SOPORTE TECNICO';
+	}
+
 	// Solo lee los claims para mostrarlos; la firma la valida el backend
 	private getPayload(): TokenPayload | null {
 		const token = this.getToken();

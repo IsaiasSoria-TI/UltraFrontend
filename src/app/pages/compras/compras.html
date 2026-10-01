@@ -1,0 +1,313 @@
+<p-toast position="top-right" />
+<p-confirmdialog [style]="{ width: '28rem' }" />
+
+<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+  <!-- Encabezado -->
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl font-bold text-gray-900 dark:text-zinc-100">Compras</h1>
+      @if (!loading() && !error()) {
+        <p class="text-sm text-gray-500 dark:text-zinc-400">
+          {{ compras().length }} compra{{ compras().length === 1 ? '' : 's' }} registrada{{ compras().length === 1 ? '' : 's' }}
+        </p>
+      }
+    </div>
+    <p-button label="Registrar compra" icon="pi pi-truck" (onClick)="abrirRegistro()"
+      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+  </div>
+
+  <p-iconfield class="w-full max-w-md">
+    <p-inputicon class="pi pi-search" />
+    <input pInputText type="search" class="w-full" placeholder="Buscar por proveedor, RUC o factura"
+      aria-label="Buscar compras" [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)" />
+  </p-iconfield>
+
+  @if (error()) {
+    <p-message severity="error" class="block w-full">
+      <span class="flex flex-wrap items-center gap-3">
+        {{ error() }}
+        <button type="button" class="cursor-pointer font-semibold underline" (click)="cargar()">Reintentar</button>
+      </span>
+    </p-message>
+  }
+
+  <!-- Tabla -->
+  <div class="flex-1 rounded-xl border border-gray-200 bg-white p-2 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+    @if (loading()) {
+      <div class="flex flex-col gap-3 p-3">
+        @for (i of [1, 2, 3, 4, 5]; track i) {
+          <p-skeleton height="2.75rem" />
+        }
+      </div>
+    } @else {
+      <p-table [value]="comprasFiltradas()" dataKey="id" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} de {totalRecords}"
+        [rowHover]="true" [tableStyle]="{ 'min-width': '56rem' }">
+        <ng-template #header>
+          <tr>
+            <th pSortableColumn="fechaCompra">Fecha <p-sorticon field="fechaCompra" /></th>
+            <th pSortableColumn="proveedor">Proveedor <p-sorticon field="proveedor" /></th>
+            <th>Factura</th>
+            <th class="text-right!">Subtotal</th>
+            <th class="text-right!">Impuesto</th>
+            <th pSortableColumn="total" class="text-right!">Total <p-sorticon field="total" /></th>
+            <th class="w-16 text-right!">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-c>
+          <tr>
+            <td class="tabular-nums text-gray-700 dark:text-zinc-300">{{ c.fechaCompra | date: 'dd/MM/yyyy' }}</td>
+            <td>
+              <p class="font-medium text-gray-900 dark:text-zinc-100">{{ c.proveedor }}</p>
+              @if (c.ruc) {
+                <p class="text-xs tabular-nums text-gray-500 dark:text-zinc-400">RUC {{ c.ruc }}</p>
+              }
+            </td>
+            <td class="tabular-nums text-gray-700 dark:text-zinc-300">
+              {{ c.codigoFactura }}
+              @if (c.pagoConCaja) {
+                <p-tag value="Caja" severity="secondary" class="ml-1" pTooltip="Pagada con el dinero de la caja" tooltipPosition="top" />
+              }
+            </td>
+            <td class="text-right! tabular-nums">{{ c.subtotal | currency: 'PEN' : 'symbol-narrow' }}</td>
+            <td class="text-right! tabular-nums">{{ c.impuesto | currency: 'PEN' : 'symbol-narrow' }}</td>
+            <td class="text-right! font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ c.total | currency: 'PEN' : 'symbol-narrow' }}</td>
+            <td>
+              <div class="flex justify-end">
+                <p-button icon="pi pi-eye" [text]="true" [rounded]="true" severity="secondary" pTooltip="Ver detalle"
+                  tooltipPosition="top" [ariaLabel]="'Ver detalle de la factura ' + c.codigoFactura" (onClick)="verDetalle(c)" />
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="7" class="py-12! text-center!">
+              <i class="pi pi-truck mb-2 text-2xl! text-gray-300 dark:text-zinc-600"></i>
+              <p class="text-sm text-gray-500 dark:text-zinc-400">
+                {{ compras().length ? 'Ninguna compra coincide con la búsqueda.' : 'Aún no hay compras registradas.' }}
+              </p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </div>
+</div>
+
+<!-- Registrar compra -->
+<p-dialog [(visible)]="registroVisible" header="Registrar compra" [modal]="true" [draggable]="false"
+  [style]="{ width: '56rem' }" [breakpoints]="{ '900px': '95vw' }">
+  @if (cargandoCatalogos()) {
+    <div class="flex flex-col gap-3">
+      <p-skeleton height="2.5rem" />
+      <p-skeleton height="8rem" />
+    </div>
+  } @else {
+    <div class="flex flex-col gap-5">
+      <!-- Proveedor, factura y fecha -->
+      <section>
+        <h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-zinc-100">1. Proveedor y factura</h3>
+        @if (facturaVerificada()) {
+          <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2.5 text-sm dark:border-zinc-800">
+            <span class="text-gray-900 dark:text-zinc-100">
+              @for (p of proveedores(); track p.id) {
+                @if (p.id === idProveedor) {
+                  <span class="font-medium">{{ p.razonSocial }}</span>
+                }
+              }
+              · Factura <span class="font-medium tabular-nums">{{ codigoFactura }}</span>
+              · {{ fechaCompra | date: 'dd/MM/yyyy' }}
+            </span>
+            <p-button label="Cambiar" [text]="true" size="small" severity="secondary" (onClick)="cambiarFactura()" />
+          </div>
+        } @else {
+          <form class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_12rem_10rem_auto] sm:items-end" (ngSubmit)="verificarFactura()" novalidate>
+            <div class="flex min-w-0 flex-col gap-1.5">
+              <label for="proveedor" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Proveedor *</label>
+              <p-select inputId="proveedor" name="proveedor" [options]="proveedores()" optionLabel="razonSocial" optionValue="id"
+                [(ngModel)]="idProveedor" [filter]="true" filterBy="razonSocial,ruc" placeholder="Selecciona"
+                emptyMessage="No hay proveedores registrados" appendTo="body" class="w-full" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label for="factura" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Código de factura *</label>
+              <input pInputText id="factura" name="factura" [(ngModel)]="codigoFactura" maxlength="50" autocomplete="off" placeholder="F001-000123" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label for="fechaCompra" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Fecha *</label>
+              <input pInputText id="fechaCompra" name="fechaCompra" type="date" [(ngModel)]="fechaCompra" [max]="hoy" />
+            </div>
+            <p-button type="submit" label="Verificar" icon="pi pi-check-circle" severity="secondary" [outlined]="true"
+              [loading]="verificando()" />
+          </form>
+          @if (avisoFactura()) {
+            <p-message severity="warn" class="mt-2 block">{{ avisoFactura() }}</p-message>
+          }
+        }
+      </section>
+
+      <!-- Productos -->
+      @if (facturaVerificada()) {
+        <section>
+          <h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-zinc-100">2. Productos</h3>
+          <form class="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_6rem_8rem_10rem_auto] sm:items-end" (ngSubmit)="agregarLinea()" novalidate>
+            <div class="col-span-2 flex min-w-0 flex-col gap-1.5 sm:col-span-1">
+              <label for="producto" class="text-xs font-medium text-gray-600 dark:text-zinc-400">Producto</label>
+              <p-select inputId="producto" name="producto" [options]="productos()" optionLabel="nombre" optionValue="id"
+                [(ngModel)]="idProducto" [filter]="true" filterBy="nombre,categoria" placeholder="Buscar producto"
+                emptyMessage="No hay productos registrados" appendTo="body" class="w-full" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label for="cantidad" class="text-xs font-medium text-gray-600 dark:text-zinc-400">Cantidad</label>
+              <p-inputnumber inputId="cantidad" name="cantidad" [(ngModel)]="cantidad" [min]="1" [useGrouping]="false" inputStyleClass="w-full" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label for="precio" class="text-xs font-medium text-gray-600 dark:text-zinc-400">Precio unit.</label>
+              <p-inputnumber inputId="precio" name="precio" [(ngModel)]="precioUnitario" mode="currency" currency="PEN"
+                locale="es-PE" [min]="0" [minFractionDigits]="2" inputStyleClass="w-full" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label for="impuesto" class="text-xs font-medium text-gray-600 dark:text-zinc-400">Impuesto</label>
+              <p-select inputId="impuesto" name="impuesto" [options]="impuestos()" optionLabel="nombre" optionValue="id"
+                [(ngModel)]="idImpuesto" emptyMessage="No hay impuestos activos" appendTo="body" class="w-full">
+                <ng-template #selecteditem let-i>{{ i.nombre }} ({{ i.porcentaje }}%)</ng-template>
+                <ng-template #item let-i>{{ i.nombre }} ({{ i.porcentaje }}%)</ng-template>
+              </p-select>
+            </div>
+            <p-button type="submit" icon="pi pi-plus" label="Agregar" severity="secondary" [outlined]="true" />
+          </form>
+          @if (errorLinea()) {
+            <p-message severity="error" class="mt-2 block">{{ errorLinea() }}</p-message>
+          }
+
+          @if (lineas().length) {
+            <div class="mt-3 overflow-x-auto rounded-lg border border-gray-200 dark:border-zinc-800">
+              <table class="w-full min-w-[40rem] text-sm">
+                <thead class="bg-gray-50 text-left text-xs text-gray-500 dark:bg-zinc-800/60 dark:text-zinc-400">
+                  <tr>
+                    <th class="px-3 py-2 font-medium">Producto</th>
+                    <th class="px-3 py-2 text-right font-medium">Cant.</th>
+                    <th class="px-3 py-2 text-right font-medium">P. unit.</th>
+                    <th class="px-3 py-2 text-right font-medium">Subtotal</th>
+                    <th class="px-3 py-2 text-right font-medium">Impuesto</th>
+                    <th class="w-12"></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-zinc-800">
+                  @for (l of lineas(); track $index) {
+                    <tr>
+                      <td class="px-3 py-2 text-gray-900 dark:text-zinc-100">{{ l.producto.nombre }}</td>
+                      <td class="px-3 py-2 text-right tabular-nums">{{ l.cantidad }}</td>
+                      <td class="px-3 py-2 text-right tabular-nums">{{ l.precioUnitario | currency: 'PEN' : 'symbol-narrow' }}</td>
+                      <td class="px-3 py-2 text-right tabular-nums">{{ l.subtotal | currency: 'PEN' : 'symbol-narrow' }}</td>
+                      <td class="px-3 py-2 text-right tabular-nums">
+                        {{ l.montoImpuesto | currency: 'PEN' : 'symbol-narrow' }}
+                        <span class="text-xs text-gray-500 dark:text-zinc-400">({{ l.impuesto.porcentaje | number: '1.0-2' }}%)</span>
+                      </td>
+                      <td class="px-1 py-1 text-right">
+                        <p-button icon="pi pi-times" [text]="true" [rounded]="true" severity="secondary"
+                          [ariaLabel]="'Quitar ' + l.producto.nombre" (onClick)="quitarLinea($index)" />
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <dl class="ml-auto mt-3 flex w-full max-w-64 flex-col gap-1 text-sm">
+              <div class="flex justify-between"><dt class="text-gray-500 dark:text-zinc-400">Subtotal</dt><dd class="tabular-nums">{{ subtotal() | currency: 'PEN' : 'symbol-narrow' }}</dd></div>
+              <div class="flex justify-between"><dt class="text-gray-500 dark:text-zinc-400">Impuesto</dt><dd class="tabular-nums">{{ impuesto() | currency: 'PEN' : 'symbol-narrow' }}</dd></div>
+              <div class="flex justify-between border-t border-gray-200 pt-1 text-base font-bold dark:border-zinc-800"><dt>Total</dt><dd class="tabular-nums">{{ total() | currency: 'PEN' : 'symbol-narrow' }}</dd></div>
+            </dl>
+
+            <!-- ¿Sale el dinero de la caja? -->
+            @if (hayCaja()) {
+              <label class="mt-4 flex cursor-pointer items-start gap-2 rounded-lg border border-gray-200 px-3 py-2.5 text-sm dark:border-zinc-800">
+                <p-toggleswitch [(ngModel)]="pagoConCaja" inputId="pagoConCaja" />
+                <span>
+                  <span class="font-medium text-gray-900 dark:text-zinc-100">Pagar con el dinero de la caja</span>
+                  <span class="block text-xs text-gray-500 dark:text-zinc-400">El total se restará del monto esperado al cerrar la caja.</span>
+                </span>
+              </label>
+            } @else {
+              <p class="mt-4 text-xs text-gray-500 dark:text-zinc-400">
+                <i class="pi pi-info-circle mr-1 text-xs!"></i>No hay caja abierta: la compra se registra como pagada por fuera de la caja.
+              </p>
+            }
+          } @else {
+            <p class="mt-3 rounded-lg border border-dashed border-gray-200 px-3 py-6 text-center text-sm text-gray-500 dark:border-zinc-800 dark:text-zinc-400">
+              Agrega los productos de la factura.
+            </p>
+          }
+        </section>
+      }
+    </div>
+  }
+
+  <ng-template #footer>
+    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="registroVisible.set(false)" />
+    <p-button label="Confirmar compra" icon="pi pi-check" [loading]="guardando()"
+      [disabled]="!facturaVerificada() || !lineas().length" (onClick)="confirmarCompra()"
+      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+  </ng-template>
+</p-dialog>
+
+<!-- Detalle -->
+<p-drawer [(visible)]="detalleVisible" position="right" header="Detalle de compra" [style]="{ width: '32rem' }">
+  @if (cargandoDetalle()) {
+    <div class="flex flex-col gap-3">
+      <p-skeleton height="4rem" />
+      <p-skeleton height="10rem" />
+    </div>
+  } @else if (detalle(); as c) {
+    <ng-container *ngTemplateOutlet="resumenCompra; context: { $implicit: c }" />
+  }
+</p-drawer>
+
+<!-- Comprobante -->
+<p-dialog [visible]="!!comprobante()" (visibleChange)="!$event && comprobante.set(null)" header="Compra registrada"
+  [modal]="true" [draggable]="false" [style]="{ width: '32rem' }" [breakpoints]="{ '640px': '95vw' }">
+  @if (comprobante(); as c) {
+    <div class="mb-3 text-center">
+      <i class="pi pi-check-circle text-3xl! text-emerald-600 dark:text-emerald-400"></i>
+      <p class="mt-1 text-sm text-gray-500 dark:text-zinc-400">Se sumó el stock de los productos.</p>
+    </div>
+    <ng-container *ngTemplateOutlet="resumenCompra; context: { $implicit: c }" />
+  }
+  <ng-template #footer>
+    <p-button label="Aceptar" (onClick)="comprobante.set(null)"
+      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+  </ng-template>
+</p-dialog>
+
+<ng-template #resumenCompra let-c>
+  <div class="flex flex-col gap-4 text-sm">
+    <div>
+      <p class="text-lg font-semibold text-gray-900 dark:text-zinc-100">Factura {{ c.codigoFactura }}</p>
+      <p class="text-xs text-gray-500 dark:text-zinc-400">{{ c.proveedor }}{{ c.ruc ? ' · RUC ' + c.ruc : '' }} · {{ c.fechaCompra | date: 'dd/MM/yyyy' }}</p>
+      @if (c.pagoConCaja) {
+        <p class="mt-1 text-xs text-gray-500 dark:text-zinc-400"><i class="pi pi-wallet mr-1 text-xs!"></i>Pagada con el dinero de la caja</p>
+      }
+    </div>
+    <ul class="divide-y divide-gray-100 rounded-lg border border-gray-200 dark:divide-zinc-800 dark:border-zinc-800">
+      @for (d of c.detalles ?? []; track $index) {
+        <li class="flex items-center justify-between gap-3 px-3 py-2.5">
+          <div class="min-w-0">
+            <p class="truncate font-medium text-gray-900 dark:text-zinc-100">{{ d.producto }}</p>
+            <p class="text-xs tabular-nums text-gray-500 dark:text-zinc-400">
+              {{ d.cantidad }} × {{ d.precioUnitario | currency: 'PEN' : 'symbol-narrow' }} · {{ d.impuesto }} {{ d.porcentajeImpuesto | number: '1.0-2' }}%
+            </p>
+          </div>
+          <div class="text-right">
+            <p class="font-semibold tabular-nums">{{ d.subtotal | currency: 'PEN' : 'symbol-narrow' }}</p>
+            <p class="text-xs tabular-nums text-gray-500 dark:text-zinc-400">+ {{ d.montoImpuesto | currency: 'PEN' : 'symbol-narrow' }}</p>
+          </div>
+        </li>
+      }
+    </ul>
+    <dl class="flex flex-col gap-1">
+      <div class="flex justify-between"><dt class="text-gray-500 dark:text-zinc-400">Subtotal</dt><dd class="tabular-nums">{{ c.subtotal | currency: 'PEN' : 'symbol-narrow' }}</dd></div>
+      <div class="flex justify-between"><dt class="text-gray-500 dark:text-zinc-400">Impuesto</dt><dd class="tabular-nums">{{ c.impuesto | currency: 'PEN' : 'symbol-narrow' }}</dd></div>
+      <div class="flex justify-between border-t border-gray-200 pt-1 text-base font-bold dark:border-zinc-800"><dt>Total</dt><dd class="tabular-nums">{{ c.total | currency: 'PEN' : 'symbol-narrow' }}</dd></div>
+    </dl>
+  </div>
+</ng-template>

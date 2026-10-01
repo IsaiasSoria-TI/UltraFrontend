@@ -67,8 +67,8 @@
       <p-table
         [value]="clientesFiltrados()"
         dataKey="id"
-        [paginator]="clientesFiltrados().length > 10"
-        [rows]="10"
+        [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [showCurrentPageReport]="true"
+        currentPageReportTemplate="{first}–{last} de {totalRecords}"
         [rowHover]="true"
         [tableStyle]="{ 'min-width': '62rem' }"
       >
@@ -80,7 +80,7 @@
             <th>Membresía</th>
             <th>Entrenador</th>
             <th pSortableColumn="fechaRegistro">Registro <p-sorticon field="fechaRegistro" /></th>
-            <th class="w-44 text-right!">Acciones</th>
+            <th class="w-52 text-right!">Acciones</th>
           </tr>
         </ng-template>
 
@@ -135,6 +135,9 @@
                   [pTooltip]="c.tieneUsuario ? 'Reenviar contraseña temporal' : 'Sin usuario'" tooltipPosition="top"
                   [ariaLabel]="'Reenviar contraseña a ' + nombreCompleto(c)"
                   (onClick)="confirmarReenvio(c)" />
+                <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger"
+                  pTooltip="Eliminar" tooltipPosition="top" [ariaLabel]="'Eliminar a ' + nombreCompleto(c)"
+                  (onClick)="confirmarEliminacion(c)" />
               </div>
             </td>
           </tr>

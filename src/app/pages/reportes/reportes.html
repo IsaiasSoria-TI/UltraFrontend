@@ -1,0 +1,187 @@
+<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900 dark:text-zinc-100">Reportes</h1>
+    <p class="text-sm text-gray-500 dark:text-zinc-400">Ingresos por ventas y membresías, compras y lo más vendido del periodo.</p>
+  </div>
+
+  <!-- Periodo -->
+  <form class="flex flex-wrap items-end gap-3" (ngSubmit)="cargar()">
+    <div class="flex flex-col gap-1">
+      <label for="desde" class="text-xs font-medium text-gray-600 dark:text-zinc-400">Desde</label>
+      <input pInputText id="desde" name="desde" type="date" [(ngModel)]="desde" [max]="hasta" />
+    </div>
+    <div class="flex flex-col gap-1">
+      <label for="hasta" class="text-xs font-medium text-gray-600 dark:text-zinc-400">Hasta</label>
+      <input pInputText id="hasta" name="hasta" type="date" [(ngModel)]="hasta" [min]="desde" [max]="hoy" />
+    </div>
+    <p-button type="submit" label="Generar" icon="pi pi-chart-bar" severity="secondary" [outlined]="true" />
+    <div class="flex gap-1">
+      @for (r of rapidos; track r.dias) {
+        <p-button [label]="r.label" size="small" [text]="true" severity="secondary" (onClick)="rango(r.dias)" />
+      }
+    </div>
+  </form>
+
+  @if (error()) {
+    <p-message severity="error" class="block w-full">{{ error() }}</p-message>
+  }
+
+  @if (loading()) {
+    <div class="grid gap-4 md:grid-cols-4">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <p-skeleton height="6rem" />
+      }
+    </div>
+    <p-skeleton height="18rem" />
+  } @else if (reporte(); as r) {
+    <!-- Indicadores -->
+    <section class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+        <p class="text-xs text-gray-500 dark:text-zinc-400">Ingresos totales</p>
+        <p class="mt-1 text-2xl font-bold tabular-nums text-gray-900 dark:text-zinc-100">{{ r.ingresos | currency: 'PEN' : 'symbol-narrow' }}</p>
+        <p class="text-xs text-gray-500 dark:text-zinc-400">Ventas + membresías</p>
+      </article>
+      <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+        <p class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-zinc-400"><span class="h-2 w-2 rounded-sm bg-red-800 dark:bg-red-500"></span>Membresías</p>
+        <p class="mt-1 text-2xl font-bold tabular-nums text-gray-900 dark:text-zinc-100">{{ r.totalMembresias | currency: 'PEN' : 'symbol-narrow' }}</p>
+        <p class="text-xs text-gray-500 dark:text-zinc-400">{{ r.cantidadMembresias }} vendidas · {{ r.membresiasCanceladas }} canceladas</p>
+      </article>
+      <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+        <p class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-zinc-400"><span class="h-2 w-2 rounded-sm bg-amber-500"></span>Ventas de productos</p>
+        <p class="mt-1 text-2xl font-bold tabular-nums text-gray-900 dark:text-zinc-100">{{ r.totalVentas | currency: 'PEN' : 'symbol-narrow' }}</p>
+        <p class="text-xs text-gray-500 dark:text-zinc-400">{{ r.cantidadVentas }} ventas · {{ r.ventasAnuladas }} anuladas</p>
+      </article>
+      <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+        <p class="text-xs text-gray-500 dark:text-zinc-400">Compras a proveedores</p>
+        <p class="mt-1 text-2xl font-bold tabular-nums text-gray-900 dark:text-zinc-100">{{ r.totalCompras | currency: 'PEN' : 'symbol-narrow' }}</p>
+        <p class="text-xs text-gray-500 dark:text-zinc-400">{{ r.cantidadCompras }} factura{{ r.cantidadCompras === 1 ? '' : 's' }} (con impuestos)</p>
+      </article>
+    </section>
+
+    <!-- Ingresos por día -->
+    <article class="rounded-xl border border-gray-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+      <div class="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <h2 class="text-base font-semibold text-gray-900 dark:text-zinc-100">Ingresos por día</h2>
+          <p class="text-xs text-gray-500 dark:text-zinc-400">{{ r.desde + 'T00:00' | date: 'dd/MM/yyyy' }} – {{ r.hasta + 'T00:00' | date: 'dd/MM/yyyy' }}</p>
+        </div>
+        <div class="flex gap-4 text-xs text-gray-600 dark:text-zinc-400">
+          <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm bg-red-800 dark:bg-red-500"></span>Membresías</span>
+          <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm bg-amber-500"></span>Ventas</span>
+        </div>
+      </div>
+
+      @if (maxDia() > 0) {
+        <div class="relative h-64" role="img" [attr.aria-label]="'Ingresos por día. Máximo ' + (maxDia() | currency: 'PEN' : 'symbol-narrow')">
+          <div class="pointer-events-none absolute inset-x-0 top-0 bottom-6 flex flex-col justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-16 shrink-0 text-right text-[0.68rem] tabular-nums text-gray-400 dark:text-zinc-500">{{ maxDia() | currency: 'PEN' : 'symbol-narrow' : '1.0-0' }}</span>
+              <span class="h-px flex-1 bg-gray-100 dark:bg-zinc-800"></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-16 shrink-0"></span>
+              <span class="h-px flex-1 bg-gray-100 dark:bg-zinc-800"></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-16 shrink-0 text-right text-[0.68rem] tabular-nums text-gray-400 dark:text-zinc-500">S/ 0</span>
+              <span class="h-px flex-1 bg-gray-300 dark:bg-zinc-700"></span>
+            </div>
+          </div>
+          <div class="absolute inset-0 left-18 flex items-end gap-px sm:gap-1">
+            @for (b of barras(); track b.fecha) {
+              <div class="group/bar relative flex h-full min-w-0 flex-1 flex-col justify-end">
+                <div class="relative flex w-full flex-1 flex-col justify-end rounded-t-sm group-hover/bar:bg-gray-50 dark:group-hover/bar:bg-zinc-800/60" style="margin-bottom: 1.5rem">
+                  <div class="mx-auto flex w-full max-w-8 flex-col justify-end" [style.height.%]="b.alturaVentas + b.alturaMembresias">
+                    @if (b.ventas > 0) {
+                      <div class="w-full rounded-t-sm bg-amber-500" [style.height.%]="(b.ventas / b.total) * 100"></div>
+                    }
+                    @if (b.membresias > 0) {
+                      <div class="w-full bg-red-800 dark:bg-red-500" [class.rounded-t-sm]="b.ventas === 0"
+                        [style.height.%]="(b.membresias / b.total) * 100"></div>
+                    }
+                  </div>
+                  <div class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2.5 py-1.5 text-xs text-white shadow-lg group-hover/bar:block dark:bg-zinc-700">
+                    <p class="font-semibold">{{ b.fecha + 'T00:00' | date: 'EEE d MMM' }}</p>
+                    <p class="tabular-nums">Membresías {{ b.membresias | currency: 'PEN' : 'symbol-narrow' }}</p>
+                    <p class="tabular-nums">Ventas {{ b.ventas | currency: 'PEN' : 'symbol-narrow' }}</p>
+                  </div>
+                </div>
+                @if (b.etiqueta) {
+                  <span class="absolute bottom-0 left-1/2 -translate-x-1/2 whitespace-nowrap text-[0.68rem] text-gray-500 dark:text-zinc-400">{{ b.fecha + 'T00:00' | date: 'd/MM' }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <p class="rounded-lg border border-dashed border-gray-200 px-3 py-12 text-center text-sm text-gray-500 dark:border-zinc-800 dark:text-zinc-400">
+          No hubo ingresos en este periodo.
+        </p>
+      }
+    </article>
+
+    <section class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <!-- Por método de pago -->
+      <article class="rounded-xl border border-gray-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 class="mb-3 text-base font-semibold text-gray-900 dark:text-zinc-100">Por método de pago</h2>
+        <ul class="flex flex-col gap-3">
+          @for (m of r.porMetodo; track m.metodo) {
+            <li>
+              <div class="mb-1 flex justify-between text-sm">
+                <span class="text-gray-700 dark:text-zinc-300">{{ m.metodo }} <span class="text-xs text-gray-500 dark:text-zinc-400">· {{ m.cantidad }}</span></span>
+                <span class="font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ m.total | currency: 'PEN' : 'symbol-narrow' }}</span>
+              </div>
+              <div class="h-2 rounded-full bg-gray-100 dark:bg-zinc-800">
+                <div class="h-2 rounded-full bg-red-800 dark:bg-red-500" [style.width.%]="porcentaje(m.total, maxMetodo())"></div>
+              </div>
+            </li>
+          } @empty {
+            <li class="py-6 text-center text-sm text-gray-500 dark:text-zinc-400">Sin cobros.</li>
+          }
+        </ul>
+      </article>
+
+      <!-- Planes -->
+      <article class="rounded-xl border border-gray-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 class="mb-3 text-base font-semibold text-gray-900 dark:text-zinc-100">Membresías por plan</h2>
+        <table class="w-full text-sm">
+          <thead class="text-left text-xs text-gray-500 dark:text-zinc-400">
+            <tr><th class="pb-2 font-medium">Plan</th><th class="pb-2 text-right font-medium">Cant.</th><th class="pb-2 text-right font-medium">Total</th></tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-zinc-800">
+            @for (p of r.planes; track p.plan) {
+              <tr>
+                <td class="py-2 text-gray-900 dark:text-zinc-100">{{ p.plan }}</td>
+                <td class="py-2 text-right tabular-nums">{{ p.cantidad }}</td>
+                <td class="py-2 text-right font-semibold tabular-nums">{{ p.total | currency: 'PEN' : 'symbol-narrow' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="3" class="py-6 text-center text-gray-500 dark:text-zinc-400">Sin membresías vendidas.</td></tr>
+            }
+          </tbody>
+        </table>
+      </article>
+
+      <!-- Productos -->
+      <article class="rounded-xl border border-gray-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 class="mb-3 text-base font-semibold text-gray-900 dark:text-zinc-100">Productos más vendidos</h2>
+        <table class="w-full text-sm">
+          <thead class="text-left text-xs text-gray-500 dark:text-zinc-400">
+            <tr><th class="pb-2 font-medium">Producto</th><th class="pb-2 text-right font-medium">Unid.</th><th class="pb-2 text-right font-medium">Total</th></tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-zinc-800">
+            @for (p of r.productos; track p.producto) {
+              <tr>
+                <td class="py-2 text-gray-900 dark:text-zinc-100">{{ p.producto }}</td>
+                <td class="py-2 text-right tabular-nums">{{ p.cantidad }}</td>
+                <td class="py-2 text-right font-semibold tabular-nums">{{ p.total | currency: 'PEN' : 'symbol-narrow' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="3" class="py-6 text-center text-gray-500 dark:text-zinc-400">Sin productos vendidos.</td></tr>
+            }
+          </tbody>
+        </table>
+      </article>
+    </section>
+  }
+</div>

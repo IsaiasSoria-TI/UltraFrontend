@@ -1,0 +1,107 @@
+<p-toast position="top-right" />
+<p-confirmdialog [style]="{ width: '28rem' }" />
+
+<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl font-bold text-gray-900 dark:text-zinc-100">Proveedores</h1>
+      @if (!loading() && !error()) {
+        <p class="text-sm text-gray-500 dark:text-zinc-400">{{ proveedores().length }} registrado{{ proveedores().length === 1 ? '' : 's' }}</p>
+      }
+    </div>
+    <p-button label="Nuevo proveedor" icon="pi pi-plus" (onClick)="abrirNuevo()"
+      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+  </div>
+
+  <p-iconfield class="w-full max-w-md">
+    <p-inputicon class="pi pi-search" />
+    <input pInputText type="search" class="w-full" placeholder="Buscar por razón social o RUC" aria-label="Buscar proveedores"
+      [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)" />
+  </p-iconfield>
+
+  @if (error()) {
+    <p-message severity="error" class="block w-full">
+      <span class="flex flex-wrap items-center gap-3">
+        {{ error() }}
+        <button type="button" class="cursor-pointer font-semibold underline" (click)="cargar()">Reintentar</button>
+      </span>
+    </p-message>
+  }
+
+  <div class="flex-1 rounded-xl border border-gray-200 bg-white p-2 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+    @if (loading()) {
+      <div class="flex flex-col gap-3 p-3">
+        @for (i of [1, 2, 3]; track i) {
+          <p-skeleton height="2.75rem" />
+        }
+      </div>
+    } @else {
+      <p-table [value]="proveedoresFiltrados()" dataKey="id" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]"
+        [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} de {totalRecords}" [rowHover]="true"
+        [tableStyle]="{ 'min-width': '40rem' }">
+        <ng-template #header>
+          <tr>
+            <th pSortableColumn="razonSocial">Razón social <p-sorticon field="razonSocial" /></th>
+            <th>RUC</th>
+            <th>Teléfono</th>
+            <th class="w-28 text-right!">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-p>
+          <tr>
+            <td class="font-medium text-gray-900 dark:text-zinc-100">{{ p.razonSocial }}</td>
+            <td class="tabular-nums text-gray-700 dark:text-zinc-300">{{ p.ruc ?? '—' }}</td>
+            <td class="tabular-nums text-gray-700 dark:text-zinc-300">{{ p.telefono ?? '—' }}</td>
+            <td>
+              <div class="flex justify-end gap-1">
+                <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" severity="secondary" pTooltip="Editar"
+                  tooltipPosition="top" [ariaLabel]="'Editar ' + p.razonSocial" (onClick)="abrirEditar(p)" />
+                <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" pTooltip="Eliminar"
+                  tooltipPosition="top" [ariaLabel]="'Eliminar ' + p.razonSocial" (onClick)="confirmarEliminacion(p)" />
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="4" class="py-12! text-center! text-sm text-gray-500 dark:text-zinc-400">
+              {{ proveedores().length ? 'Ningún proveedor coincide con la búsqueda.' : 'Aún no hay proveedores.' }}
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </div>
+</div>
+
+<p-dialog [(visible)]="formVisible" [header]="editando() ? 'Editar proveedor' : 'Nuevo proveedor'" [modal]="true"
+  [draggable]="false" [style]="{ width: '30rem' }" [breakpoints]="{ '640px': '95vw' }">
+  <form [formGroup]="form" (ngSubmit)="guardar()" class="grid grid-cols-2 gap-4 pt-1" novalidate>
+    <div class="col-span-2 flex flex-col gap-1.5">
+      <label for="razonSocial" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Razón social *</label>
+      <input pInputText id="razonSocial" formControlName="razonSocial" autocomplete="off" [invalid]="invalido('razonSocial')" />
+      @if (invalido('razonSocial')) {
+        <small class="text-red-600 dark:text-red-400">La razón social es obligatoria.</small>
+      }
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="ruc" class="text-sm font-medium text-gray-700 dark:text-zinc-300">RUC</label>
+      <input pInputText id="ruc" formControlName="ruc" inputmode="numeric" maxlength="11" autocomplete="off" [invalid]="invalido('ruc')" />
+      @if (invalido('ruc')) {
+        <small class="text-red-600 dark:text-red-400">11 dígitos (10, 15, 17 o 20…).</small>
+      }
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="telefono" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Teléfono</label>
+      <input pInputText id="telefono" formControlName="telefono" inputmode="tel" maxlength="9" autocomplete="off" [invalid]="invalido('telefono')" />
+      @if (invalido('telefono')) {
+        <small class="text-red-600 dark:text-red-400">Entre 7 y 9 dígitos.</small>
+      }
+    </div>
+  </form>
+  <ng-template #footer>
+    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="formVisible.set(false)" />
+    <p-button [label]="editando() ? 'Guardar cambios' : 'Crear proveedor'" icon="pi pi-check" [loading]="guardando()"
+      (onClick)="guardar()" styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+  </ng-template>
+</p-dialog>

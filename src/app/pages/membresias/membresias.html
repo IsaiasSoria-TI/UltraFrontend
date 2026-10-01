@@ -1,0 +1,232 @@
+<p-toast position="top-right" />
+<p-confirmdialog [style]="{ width: '28rem' }" />
+
+<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+  <!-- Encabezado -->
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl font-bold text-gray-900 dark:text-zinc-100">Membresías</h1>
+      @if (!loading() && !error()) {
+        <p class="text-sm text-gray-500 dark:text-zinc-400">
+          {{ membresias().length }} vendida{{ membresias().length === 1 ? '' : 's' }}{{ vista() === 'turno' ? ' en el turno actual' : '' }}
+        </p>
+      }
+    </div>
+    <p-button label="Vender o renovar" icon="pi pi-id-card" (onClick)="abrirVenta()"
+      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+  </div>
+
+  <!-- Filtros -->
+  <div class="flex flex-wrap items-center gap-3">
+    <p-selectbutton [options]="opcionesVista" optionLabel="label" optionValue="value" [allowEmpty]="false"
+      [ngModel]="vista()" (ngModelChange)="cambiarVista($event)" aria-label="Membresías a mostrar" />
+    <p-iconfield class="w-full max-w-md">
+      <p-inputicon class="pi pi-search" />
+      <input pInputText type="search" class="w-full" placeholder="Buscar por cliente, DNI, correo o plan"
+        aria-label="Buscar membresías" [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)" />
+    </p-iconfield>
+    <p-selectbutton [options]="opcionesFiltro" optionLabel="label" optionValue="value" [allowEmpty]="false"
+      [ngModel]="filtroEstado()" (ngModelChange)="filtroEstado.set($event)" aria-label="Filtrar por estado" />
+  </div>
+
+  @if (error()) {
+    <p-message severity="error" class="block w-full">
+      <span class="flex flex-wrap items-center gap-3">
+        {{ error() }}
+        <button type="button" class="cursor-pointer font-semibold underline" (click)="cargar()">Reintentar</button>
+      </span>
+    </p-message>
+  }
+
+  <!-- Tabla -->
+  <div class="flex-1 rounded-xl border border-gray-200 bg-white p-2 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+    @if (loading()) {
+      <div class="flex flex-col gap-3 p-3">
+        @for (i of [1, 2, 3, 4, 5]; track i) {
+          <p-skeleton height="2.75rem" />
+        }
+      </div>
+    } @else {
+      <p-table [value]="membresiasFiltradas()" dataKey="id" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} de {totalRecords}"
+        [rowHover]="true" [tableStyle]="{ 'min-width': '62rem' }">
+        <ng-template #header>
+          <tr>
+            <th pSortableColumn="cliente">Cliente <p-sorticon field="cliente" /></th>
+            <th>Plan</th>
+            <th pSortableColumn="fechaInicio">Vigencia <p-sorticon field="fechaInicio" /></th>
+            <th class="text-right!">Pagado</th>
+            <th>Cobro</th>
+            <th>Estado</th>
+            <th class="w-20 text-right!">Acciones</th>
+          </tr>
+        </ng-template>
+
+        <ng-template #body let-m>
+          <tr>
+            <td>
+              <p class="font-medium text-gray-900 dark:text-zinc-100">{{ m.cliente }}</p>
+              <p class="text-xs text-gray-500 dark:text-zinc-400">{{ m.correo }}</p>
+            </td>
+            <td class="text-gray-700 dark:text-zinc-300">{{ m.plan }}</td>
+            <td class="tabular-nums text-gray-700 dark:text-zinc-300">
+              {{ m.fechaInicio | date: 'dd/MM/yy' }} – {{ ultimoDia(m.fechaFin) | date: 'dd/MM/yy' }}
+            </td>
+            <td class="text-right! font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ m.montoPagado | currency: 'PEN' : 'symbol-narrow' }}</td>
+            <td class="text-xs text-gray-500 dark:text-zinc-400">{{ m.metodoPago }} · {{ m.usuario }}</td>
+            <td><p-tag [severity]="severidad(m.estado)" [value]="etiqueta(m.estado)" /></td>
+            <td>
+              <div class="flex justify-end">
+                @if (esAdministrador && (m.estado === 'activo' || m.estado === 'programado') && !m.cajaCerrada) {
+                  <p-button icon="pi pi-ban" [text]="true" [rounded]="true" severity="danger" pTooltip="Cancelar membresía"
+                    tooltipPosition="top" [ariaLabel]="'Cancelar membresía de ' + m.cliente" (onClick)="confirmarCancelacion(m)" />
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="7" class="py-12! text-center!">
+              <i class="pi pi-id-card mb-2 text-2xl! text-gray-300 dark:text-zinc-600"></i>
+              <p class="text-sm text-gray-500 dark:text-zinc-400">
+                {{ membresias().length ? 'Ninguna membresía coincide con los filtros.'
+                  : vista() === 'turno' ? 'Aún no se vendieron membresías en el turno actual.' : 'Aún no se vendieron membresías.' }}
+              </p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </div>
+</div>
+
+<!-- Vender o renovar membresía -->
+<p-dialog [(visible)]="ventaVisible" header="Vender o renovar membresía" [modal]="true" [draggable]="false"
+  [style]="{ width: '42rem' }" [breakpoints]="{ '640px': '95vw' }">
+  @if (verificandoCaja()) {
+    <div class="flex flex-col gap-3">
+      <p-skeleton height="2.5rem" />
+      <p-skeleton height="6rem" />
+    </div>
+  } @else if (!hayCaja()) {
+    <!-- ¿Hay caja abierta? [no] -->
+    <p-message severity="warn" class="block">
+      <span class="flex flex-wrap items-center gap-3">
+        No hay caja abierta. Abre la caja primero.
+        <a routerLink="/caja" class="font-semibold underline">Ir a Caja</a>
+      </span>
+    </p-message>
+  } @else {
+    <div class="flex flex-col gap-5">
+      <section>
+        <h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-zinc-100">1. Cliente</h3>
+        <app-buscar-cliente [permitirRegistro]="true" (seleccionado)="onCliente($event)" />
+        @if (cliente()?.membresia; as m) {
+          <p class="mt-2 text-xs text-gray-500 dark:text-zinc-400">
+            Membresía actual: <span class="font-medium">{{ m.plan }}</span> ({{ etiqueta(m.estado) }}) hasta
+            {{ ultimoDia(m.fechaFin) | date: 'dd/MM/yyyy' }}. La nueva empezará cuando termine.
+          </p>
+        }
+      </section>
+
+      @if (cliente()) {
+        <section>
+          <h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-zinc-100">2. Plan</h3>
+          @if (planes().length) {
+            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Plan de membresía">
+              @for (p of planes(); track p.id) {
+                <button type="button" role="radio" [attr.aria-checked]="planSeleccionado() === p.id" (click)="elegirPlan(p.id)"
+                  class="flex cursor-pointer items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors"
+                  [class]="planSeleccionado() === p.id
+                    ? 'border-red-800 bg-red-50 dark:border-red-500 dark:bg-red-950/40'
+                    : 'border-gray-200 hover:border-gray-300 dark:border-zinc-800 dark:hover:border-zinc-700'">
+                  <span>
+                    <span class="block text-sm font-medium text-gray-900 dark:text-zinc-100">{{ p.nombre }}</span>
+                    <span class="block text-xs text-gray-500 dark:text-zinc-400">{{ p.duracionDias }} días</span>
+                  </span>
+                  <span class="font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ p.precio | currency: 'PEN' : 'symbol-narrow' }}</span>
+                </button>
+              }
+            </div>
+          } @else {
+            <p class="rounded-lg border border-dashed border-gray-200 px-3 py-6 text-center text-sm text-gray-500 dark:border-zinc-800 dark:text-zinc-400">
+              No hay planes de membresía registrados.
+            </p>
+          }
+        </section>
+      }
+
+      @if (cotizando()) {
+        <p-skeleton height="7rem" />
+      } @else if (cotizacion(); as c) {
+        <section>
+          <h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-zinc-100">3. Resumen y cobro</h3>
+          <dl class="grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg bg-gray-50 p-3 text-sm dark:bg-zinc-800/60">
+            <div>
+              <dt class="text-xs text-gray-500 dark:text-zinc-400">Inicio</dt>
+              <dd class="tabular-nums text-gray-900 dark:text-zinc-100">{{ c.fechaInicio | date: 'dd/MM/yyyy' }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-gray-500 dark:text-zinc-400">Último día</dt>
+              <dd class="tabular-nums text-gray-900 dark:text-zinc-100">{{ ultimoDia(c.fechaFin) | date: 'dd/MM/yyyy' }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-gray-500 dark:text-zinc-400">Estado al guardar</dt>
+              <dd><p-tag [severity]="severidad(c.estado)" [value]="etiqueta(c.estado)" /></dd>
+            </div>
+            <div>
+              <dt class="text-xs text-gray-500 dark:text-zinc-400">Monto a pagar</dt>
+              <dd class="text-lg font-bold tabular-nums text-gray-900 dark:text-zinc-100">{{ c.monto | currency: 'PEN' : 'symbol-narrow' }}</dd>
+            </div>
+          </dl>
+          @if (c.renovacion) {
+            <p class="mt-2 text-xs text-gray-500 dark:text-zinc-400">Renovación: empieza al terminar la membresía vigente.</p>
+          }
+
+          <label for="metodoPago" class="mb-1.5 mt-4 block text-sm font-medium text-gray-700 dark:text-zinc-300">Método de pago *</label>
+          <p-select inputId="metodoPago" [options]="metodos()" optionLabel="nombre" optionValue="id"
+            [(ngModel)]="metodoSeleccionado" placeholder="Selecciona" appendTo="body" class="w-full"
+            emptyMessage="No hay métodos de pago activos" />
+        </section>
+      }
+    </div>
+  }
+
+  <ng-template #footer>
+    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="ventaVisible.set(false)" />
+    @if (hayCaja()) {
+      <p-button [label]="cotizacion() ? 'Cobrar ' + (cotizacion()!.monto | currency: 'PEN' : 'symbol-narrow') : 'Cobrar'"
+        icon="pi pi-check" [loading]="vendiendo()" [disabled]="!cotizacion() || metodoSeleccionado === null"
+        (onClick)="confirmarVenta()"
+        styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    }
+  </ng-template>
+</p-dialog>
+
+<!-- Comprobante -->
+<p-dialog [visible]="!!comprobante()" (visibleChange)="!$event && comprobante.set(null)" header="Comprobante de membresía"
+  [modal]="true" [draggable]="false" [style]="{ width: '26rem' }" [breakpoints]="{ '640px': '95vw' }">
+  @if (comprobante(); as m) {
+    <div class="flex flex-col gap-3 text-sm">
+      <div class="text-center">
+        <i class="pi pi-check-circle text-3xl! text-emerald-600 dark:text-emerald-400"></i>
+        <p class="mt-1 font-semibold text-gray-900 dark:text-zinc-100">Membresía registrada · N.º {{ m.id }}</p>
+      </div>
+      <dl class="flex flex-col gap-1.5">
+        <div class="flex justify-between gap-3"><dt class="text-gray-500 dark:text-zinc-400">Cliente</dt><dd class="text-right text-gray-900 dark:text-zinc-100">{{ m.cliente }}</dd></div>
+        <div class="flex justify-between gap-3"><dt class="text-gray-500 dark:text-zinc-400">DNI</dt><dd class="tabular-nums">{{ m.dni }}</dd></div>
+        <div class="flex justify-between gap-3"><dt class="text-gray-500 dark:text-zinc-400">Plan</dt><dd>{{ m.plan }}</dd></div>
+        <div class="flex justify-between gap-3"><dt class="text-gray-500 dark:text-zinc-400">Vigencia</dt><dd class="tabular-nums">{{ m.fechaInicio | date: 'dd/MM/yyyy' }} – {{ ultimoDia(m.fechaFin) | date: 'dd/MM/yyyy' }}</dd></div>
+        <div class="flex justify-between gap-3"><dt class="text-gray-500 dark:text-zinc-400">Estado</dt><dd><p-tag [severity]="severidad(m.estado)" [value]="etiqueta(m.estado)" /></dd></div>
+        <div class="flex justify-between gap-3"><dt class="text-gray-500 dark:text-zinc-400">Método de pago</dt><dd>{{ m.metodoPago }}</dd></div>
+        <div class="flex justify-between gap-3"><dt class="text-gray-500 dark:text-zinc-400">Atendido por</dt><dd>{{ m.usuario }}</dd></div>
+        <div class="mt-1 flex justify-between gap-3 border-t border-gray-200 pt-2 text-base font-bold dark:border-zinc-800"><dt>Total</dt><dd class="tabular-nums">{{ m.montoPagado | currency: 'PEN' : 'symbol-narrow' }}</dd></div>
+      </dl>
+    </div>
+  }
+  <ng-template #footer>
+    <p-button label="Aceptar" (onClick)="comprobante.set(null)"
+      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+  </ng-template>
+</p-dialog>

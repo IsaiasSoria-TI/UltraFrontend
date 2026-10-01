@@ -1,0 +1,237 @@
+<p-toast position="top-right" />
+
+<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+  <!-- Encabezado -->
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl font-bold text-gray-900 dark:text-zinc-100">Caja</h1>
+      <p class="text-sm text-gray-500 dark:text-zinc-400">Apertura, resumen del turno y cierre con arqueo.</p>
+    </div>
+    <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" severity="secondary" ariaLabel="Actualizar"
+      pTooltip="Actualizar" (onClick)="cargar()" [disabled]="loading()" />
+  </div>
+
+  @if (error()) {
+    <p-message severity="error" class="block w-full">
+      <span class="flex flex-wrap items-center gap-3">
+        {{ error() }}
+        <button type="button" class="cursor-pointer font-semibold underline" (click)="cargar()">Reintentar</button>
+      </span>
+    </p-message>
+  }
+
+  @if (loading()) {
+    <div class="grid gap-4 md:grid-cols-3">
+      <p-skeleton height="9rem" />
+      <p-skeleton height="9rem" />
+      <p-skeleton height="9rem" />
+    </div>
+  } @else if (!error()) {
+    @if (caja(); as c) {
+      <!-- Caja abierta: resumen del turno -->
+      <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <span class="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400" aria-hidden="true">
+              <i class="pi pi-lock-open text-lg!"></i>
+            </span>
+            <div>
+              <div class="flex items-center gap-2">
+                <p class="font-semibold text-gray-900 dark:text-zinc-100">Caja abierta</p>
+                <p-tag severity="success" value="Abierta" />
+              </div>
+              <p class="text-sm text-gray-500 dark:text-zinc-400">
+                Por {{ c.usuario }} · desde {{ c.fechaApertura | date: 'dd/MM/yyyy HH:mm' }}
+              </p>
+            </div>
+          </div>
+          <p-button label="Cerrar caja" icon="pi pi-lock" (onClick)="abrirCierre()"
+            styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+        </div>
+
+        @if (c.resumen; as r) {
+          <dl class="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+            <div class="rounded-lg bg-gray-50 p-3 dark:bg-zinc-800/60">
+              <dt class="text-xs text-gray-500 dark:text-zinc-400">Monto inicial</dt>
+              <dd class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ c.montoInicial | currency: 'PEN' : 'symbol-narrow' }}</dd>
+            </div>
+            <div class="rounded-lg bg-gray-50 p-3 dark:bg-zinc-800/60">
+              <dt class="text-xs text-gray-500 dark:text-zinc-400">Ventas ({{ r.cantidadVentas }})</dt>
+              <dd class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ r.totalVentas | currency: 'PEN' : 'symbol-narrow' }}</dd>
+            </div>
+            <div class="rounded-lg bg-gray-50 p-3 dark:bg-zinc-800/60">
+              <dt class="text-xs text-gray-500 dark:text-zinc-400">Membresías ({{ r.cantidadMembresias }})</dt>
+              <dd class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ r.totalMembresias | currency: 'PEN' : 'symbol-narrow' }}</dd>
+            </div>
+            <div class="rounded-lg bg-gray-50 p-3 dark:bg-zinc-800/60">
+              <dt class="text-xs text-gray-500 dark:text-zinc-400">Ingresos en efectivo</dt>
+              <dd class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ r.ingresosEfectivo | currency: 'PEN' : 'symbol-narrow' }}</dd>
+            </div>
+            <div class="rounded-lg bg-gray-50 p-3 dark:bg-zinc-800/60">
+              <dt class="text-xs text-gray-500 dark:text-zinc-400">Compras pagadas ({{ r.cantidadCompras }})</dt>
+              <dd class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-zinc-100">− {{ r.egresosCompras | currency: 'PEN' : 'symbol-narrow' }}</dd>
+            </div>
+            <div class="col-span-2 rounded-lg bg-red-50 p-3 lg:col-span-1 dark:bg-red-950/40">
+              <dt class="text-xs text-red-800 dark:text-red-300">Monto esperado en caja</dt>
+              <dd class="mt-1 text-lg font-bold tabular-nums text-red-900 dark:text-red-200">{{ c.montoEsperado | currency: 'PEN' : 'symbol-narrow' }}</dd>
+            </div>
+          </dl>
+
+          <h2 class="mb-2 mt-6 text-sm font-semibold text-gray-900 dark:text-zinc-100">Cobros por método de pago</h2>
+          @if (r.porMetodo.length) {
+            <ul class="divide-y divide-gray-100 rounded-lg border border-gray-200 dark:divide-zinc-800 dark:border-zinc-800">
+              @for (m of r.porMetodo; track m.metodo) {
+                <li class="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
+                  <span class="flex items-center gap-2 text-gray-900 dark:text-zinc-100">
+                    {{ m.metodo }}
+                    @if (m.afectaCaja) {
+                      <p-tag value="En caja" severity="secondary" />
+                    }
+                  </span>
+                  <span class="tabular-nums text-gray-600 dark:text-zinc-300">
+                    {{ m.cantidad }} cobro{{ m.cantidad === 1 ? '' : 's' }} ·
+                    <span class="font-semibold text-gray-900 dark:text-zinc-100">{{ m.total | currency: 'PEN' : 'symbol-narrow' }}</span>
+                  </span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="rounded-lg border border-dashed border-gray-200 px-3 py-6 text-center text-sm text-gray-500 dark:border-zinc-800 dark:text-zinc-400">
+              Aún no hay cobros en este turno.
+            </p>
+          }
+        }
+      </section>
+    } @else {
+      <!-- Sin caja abierta: formulario de apertura -->
+      <section class="max-w-xl rounded-xl border border-gray-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+        <div class="mb-4 flex items-center gap-3">
+          <span class="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-300" aria-hidden="true">
+            <i class="pi pi-lock text-lg!"></i>
+          </span>
+          <div>
+            <p class="font-semibold text-gray-900 dark:text-zinc-100">No hay caja abierta</p>
+            <p class="text-sm text-gray-500 dark:text-zinc-400">Ábrela para poder vender productos y membresías.</p>
+          </div>
+        </div>
+
+        <form (ngSubmit)="abrir()" class="flex flex-col gap-1.5" novalidate>
+          <label for="montoInicial" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Monto inicial (sencillo para vuelto) *</label>
+          <div class="flex flex-wrap gap-2">
+            <p-inputnumber inputId="montoInicial" name="montoInicial" [(ngModel)]="montoInicial" mode="currency"
+              currency="PEN" locale="es-PE" [min]="0" [minFractionDigits]="2" [invalid]="montoInicialInvalido()"
+              placeholder="S/ 0.00" class="min-w-0 flex-1" />
+            <p-button type="submit" label="Abrir caja" icon="pi pi-lock-open" [loading]="abriendo()"
+              styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+          </div>
+          @if (montoInicialInvalido()) {
+            <small class="text-red-600 dark:text-red-400">Ingresa un monto mayor o igual a 0.</small>
+          }
+        </form>
+      </section>
+    }
+
+    <!-- Historial de cierres -->
+    <section class="rounded-xl border border-gray-200 bg-white p-2 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+      <h2 class="px-3 pb-1 pt-2 text-sm font-semibold text-gray-900 dark:text-zinc-100">Cierres recientes</h2>
+      <p-table [value]="historial()" dataKey="id" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} de {totalRecords}"
+        [tableStyle]="{ 'min-width': '52rem' }">
+        <ng-template #header>
+          <tr>
+            <th>Apertura</th>
+            <th>Cierre</th>
+            <th>Usuario</th>
+            <th class="text-right!">Inicial</th>
+            <th class="text-right!">Esperado</th>
+            <th class="text-right!">Contado</th>
+            <th class="text-right!">Diferencia</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-h>
+          <tr>
+            <td class="text-gray-700 dark:text-zinc-300">{{ h.fechaApertura | date: 'dd/MM/yy HH:mm' }}</td>
+            <td class="text-gray-700 dark:text-zinc-300">{{ h.fechaCierre | date: 'dd/MM/yy HH:mm' }}</td>
+            <td class="text-gray-700 dark:text-zinc-300">{{ h.usuario }}</td>
+            <td class="text-right! tabular-nums">{{ h.montoInicial | currency: 'PEN' : 'symbol-narrow' }}</td>
+            <td class="text-right! tabular-nums">{{ h.montoEsperado | currency: 'PEN' : 'symbol-narrow' }}</td>
+            <td class="text-right! tabular-nums">{{ h.montoFinal | currency: 'PEN' : 'symbol-narrow' }}</td>
+            <td class="text-right! font-semibold tabular-nums" [class]="claseDiferencia(h.diferencia)">
+              {{ h.diferencia | currency: 'PEN' : 'symbol-narrow' }}
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="7" class="py-10! text-center! text-sm text-gray-500 dark:text-zinc-400">Aún no hay cierres de caja.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </section>
+  }
+</div>
+
+<!-- Cierre: contar el dinero, ver diferencia y confirmar -->
+<p-dialog [(visible)]="cierreVisible" header="Cerrar caja" [modal]="true" [draggable]="false"
+  [style]="{ width: '28rem' }" [breakpoints]="{ '640px': '95vw' }">
+  @if (caja(); as c) {
+    <div class="flex flex-col gap-4">
+      <div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2.5 dark:bg-zinc-800/60">
+        <span class="text-sm text-gray-600 dark:text-zinc-300">Monto esperado</span>
+        <span class="font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ c.montoEsperado | currency: 'PEN' : 'symbol-narrow' }}</span>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="montoFinal" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Dinero contado en caja *</label>
+        <p-inputnumber inputId="montoFinal" [ngModel]="montoFinal()" (ngModelChange)="montoFinal.set($event)"
+          mode="currency" currency="PEN" locale="es-PE" [min]="0" [minFractionDigits]="2" placeholder="S/ 0.00"
+          class="w-full" />
+      </div>
+
+      @if (diferenciaCierre() !== null) {
+        <div class="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2.5 dark:border-zinc-800">
+          <span class="text-sm text-gray-600 dark:text-zinc-300">Diferencia · {{ textoDiferencia(diferenciaCierre()) }}</span>
+          <span class="font-bold tabular-nums" [class]="claseDiferencia(diferenciaCierre())">
+            {{ diferenciaCierre() | currency: 'PEN' : 'symbol-narrow' }}
+          </span>
+        </div>
+      }
+    </div>
+  }
+
+  <ng-template #footer>
+    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="cierreVisible.set(false)" />
+    <p-button label="Confirmar cierre" icon="pi pi-check" [loading]="cerrando()" [disabled]="montoFinal() === null"
+      (onClick)="confirmarCierre()"
+      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+  </ng-template>
+</p-dialog>
+
+<!-- Reporte de cierre -->
+<p-dialog [visible]="!!reporte()" (visibleChange)="!$event && reporte.set(null)" header="Reporte de cierre"
+  [modal]="true" [draggable]="false" [style]="{ width: '30rem' }" [breakpoints]="{ '640px': '95vw' }">
+  @if (reporte(); as r) {
+    <dl class="flex flex-col gap-2 text-sm">
+      <div class="flex justify-between"><dt class="text-gray-500 dark:text-zinc-400">Usuario</dt><dd class="text-gray-900 dark:text-zinc-100">{{ r.usuario }}</dd></div>
+      <div class="flex justify-between"><dt class="text-gray-500 dark:text-zinc-400">Apertura</dt><dd class="tabular-nums text-gray-900 dark:text-zinc-100">{{ r.fechaApertura | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+      <div class="flex justify-between"><dt class="text-gray-500 dark:text-zinc-400">Cierre</dt><dd class="tabular-nums text-gray-900 dark:text-zinc-100">{{ r.fechaCierre | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+      @if (r.resumen; as s) {
+        <div class="mt-2 flex justify-between"><dt class="text-gray-500 dark:text-zinc-400">Ventas ({{ s.cantidadVentas }})</dt><dd class="tabular-nums">{{ s.totalVentas | currency: 'PEN' : 'symbol-narrow' }}</dd></div>
+        <div class="flex justify-between"><dt class="text-gray-500 dark:text-zinc-400">Membresías ({{ s.cantidadMembresias }})</dt><dd class="tabular-nums">{{ s.totalMembresias | currency: 'PEN' : 'symbol-narrow' }}</dd></div>
+        @for (m of s.porMetodo; track m.metodo) {
+          <div class="flex justify-between pl-3 text-xs"><dt class="text-gray-500 dark:text-zinc-400">{{ m.metodo }}</dt><dd class="tabular-nums">{{ m.total | currency: 'PEN' : 'symbol-narrow' }}</dd></div>
+        }
+        @if (s.cantidadCompras) {
+          <div class="flex justify-between"><dt class="text-gray-500 dark:text-zinc-400">Compras pagadas con caja ({{ s.cantidadCompras }})</dt><dd class="tabular-nums">− {{ s.egresosCompras | currency: 'PEN' : 'symbol-narrow' }}</dd></div>
+        }
+      }
+      <div class="mt-2 flex justify-between border-t border-gray-200 pt-2 dark:border-zinc-800"><dt class="text-gray-500 dark:text-zinc-400">Monto inicial</dt><dd class="tabular-nums">{{ r.montoInicial | currency: 'PEN' : 'symbol-narrow' }}</dd></div>
+      <div class="flex justify-between"><dt class="text-gray-500 dark:text-zinc-400">Monto esperado</dt><dd class="tabular-nums">{{ r.montoEsperado | currency: 'PEN' : 'symbol-narrow' }}</dd></div>
+      <div class="flex justify-between"><dt class="text-gray-500 dark:text-zinc-400">Monto contado</dt><dd class="tabular-nums">{{ r.montoFinal | currency: 'PEN' : 'symbol-narrow' }}</dd></div>
+      <div class="flex justify-between font-semibold"><dt>Diferencia · {{ textoDiferencia(r.diferencia) }}</dt><dd class="tabular-nums" [class]="claseDiferencia(r.diferencia)">{{ r.diferencia | currency: 'PEN' : 'symbol-narrow' }}</dd></div>
+    </dl>
+  }
+  <ng-template #footer>
+    <p-button label="Aceptar" (onClick)="reporte.set(null)"
+      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+  </ng-template>
+</p-dialog>

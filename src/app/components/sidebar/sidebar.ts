@@ -35,7 +35,7 @@ export class SidebarComponent {
   readonly iniciales = this.username.slice(0, 2).toUpperCase();
 
   // Opciones tomadas del diagrama de casos de uso (Recepcionista y Administrador)
-  readonly sections: SidebarSection[] = [
+  private readonly todasLasSecciones: SidebarSection[] = [
     {
       titulo: 'Principal',
       items: [{ icon: 'pi pi-th-large', label: 'Dashboard', route: '/dashboard', disponible: true }],
@@ -44,24 +44,29 @@ export class SidebarComponent {
       titulo: 'Operaciones',
       items: [
         { icon: 'pi pi-users', label: 'Clientes', route: '/clientes', disponible: true },
-        { icon: 'pi pi-id-card', label: 'Membresías', route: '/membresias', disponible: false },
-        { icon: 'pi pi-shopping-cart', label: 'Ventas', route: '/ventas', disponible: false },
-        { icon: 'pi pi-wallet', label: 'Caja', route: '/caja', disponible: false },
-        { icon: 'pi pi-truck', label: 'Compras', route: '/compras', disponible: false },
+        { icon: 'pi pi-id-card', label: 'Membresías', route: '/membresias', disponible: true },
+        { icon: 'pi pi-shopping-cart', label: 'Ventas', route: '/ventas', disponible: true },
+        { icon: 'pi pi-wallet', label: 'Caja', route: '/caja', disponible: true },
+        { icon: 'pi pi-truck', label: 'Compras', route: '/compras', disponible: true },
       ],
     },
     {
       titulo: 'Administración',
       items: [
-        { icon: 'pi pi-tags', label: 'Planes', route: '/planes', disponible: false },
-        { icon: 'pi pi-box', label: 'Productos', route: '/productos', disponible: false },
-        { icon: 'pi pi-building', label: 'Proveedores', route: '/proveedores', disponible: false },
-        { icon: 'pi pi-percentage', label: 'Impuestos', route: '/impuestos', disponible: false },
-        { icon: 'pi pi-user-edit', label: 'Usuarios y roles', route: '/usuarios', disponible: false },
-        { icon: 'pi pi-chart-bar', label: 'Reportes', route: '/reportes', disponible: false },
+        { icon: 'pi pi-tags', label: 'Planes', route: '/planes', disponible: true },
+        { icon: 'pi pi-box', label: 'Productos', route: '/productos', disponible: true },
+        { icon: 'pi pi-building', label: 'Proveedores', route: '/proveedores', disponible: true },
+        { icon: 'pi pi-percentage', label: 'Impuestos', route: '/impuestos', disponible: true },
+        { icon: 'pi pi-user-edit', label: 'Usuarios y roles', route: '/usuarios', disponible: true },
+        { icon: 'pi pi-chart-bar', label: 'Reportes', route: '/reportes', disponible: true },
       ],
     },
   ];
+
+  // Administración solo la ve el administrador (el backend también lo restringe)
+  readonly sections = this.authService.esAdministrador()
+    ? this.todasLasSecciones
+    : this.todasLasSecciones.filter((s) => s.titulo !== 'Administración');
 
   logout(): void {
     this.authService.logout();

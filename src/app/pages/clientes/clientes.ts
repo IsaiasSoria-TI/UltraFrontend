@@ -230,6 +230,31 @@ export class ClientesComponent implements OnInit {
     }
   }
 
+  // ---------- Eliminar (borrado lógico) ----------
+
+  confirmarEliminacion(cliente: Cliente): void {
+    this.confirmationService.confirm({
+      header: 'Eliminar cliente',
+      message: `${this.nombreCompleto(cliente)} dejará de aparecer en la lista de clientes. Su historial de membresías y ventas se conserva.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonProps: { severity: 'danger' },
+      rejectButtonProps: { severity: 'secondary', outlined: true },
+      accept: () => this.eliminar(cliente),
+    });
+  }
+
+  private async eliminar(cliente: Cliente): Promise<void> {
+    try {
+      await firstValueFrom(this.clienteService.eliminar(cliente.id));
+      this.clientes.update((lista) => lista.filter((c) => c.id !== cliente.id));
+      this.toast('success', 'Cliente eliminado', `${this.nombreCompleto(cliente)} se eliminó de la lista.`);
+    } catch (e) {
+      this.toast('error', 'No se pudo eliminar', this.mensajeError(e, 'Inténtalo de nuevo.'));
+    }
+  }
+
   // ---------- Asignar entrenador ----------
 
   async abrirEntrenador(cliente: Cliente): Promise<void> {

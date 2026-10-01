@@ -1,0 +1,283 @@
+<p-toast position="top-right" />
+<p-confirmdialog [style]="{ width: '28rem' }" />
+
+<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+  <!-- Encabezado -->
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl font-bold text-gray-900 dark:text-zinc-100">Ventas</h1>
+      @if (!loading() && !error()) {
+        <p class="text-sm text-gray-500 dark:text-zinc-400">
+          {{ ventas().length }} venta{{ ventas().length === 1 ? '' : 's' }}
+          {{ vista() === 'turno' ? 'en el turno actual' : 'en el periodo' }} ·
+          {{ totalActivas() | currency: 'PEN' : 'symbol-narrow' }} sin contar anuladas
+        </p>
+      }
+    </div>
+    <p-button label="Nueva venta" icon="pi pi-shopping-cart" (onClick)="abrirVenta()"
+      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+  </div>
+
+  <!-- Turno actual o consulta por fechas -->
+  <div class="flex flex-wrap items-end gap-3">
+    <p-selectbutton [options]="opcionesVista" optionLabel="label" optionValue="value" [allowEmpty]="false"
+      [ngModel]="vista()" (ngModelChange)="cambiarVista($event)" aria-label="Ventas a mostrar" />
+    @if (vista() === 'fechas') {
+      <form class="flex flex-wrap items-end gap-3" (ngSubmit)="cargar()">
+        <div class="flex flex-col gap-1">
+          <label for="desde" class="text-xs font-medium text-gray-600 dark:text-zinc-400">Desde</label>
+          <input pInputText id="desde" name="desde" type="date" [(ngModel)]="desde" [max]="hasta" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="hasta" class="text-xs font-medium text-gray-600 dark:text-zinc-400">Hasta</label>
+          <input pInputText id="hasta" name="hasta" type="date" [(ngModel)]="hasta" [min]="desde" />
+        </div>
+        <p-button type="submit" label="Filtrar" icon="pi pi-filter" severity="secondary" [outlined]="true" />
+      </form>
+    }
+  </div>
+
+  @if (error()) {
+    <p-message severity="error" class="block w-full">
+      <span class="flex flex-wrap items-center gap-3">
+        {{ error() }}
+        <button type="button" class="cursor-pointer font-semibold underline" (click)="cargar()">Reintentar</button>
+      </span>
+    </p-message>
+  }
+
+  <!-- Tabla -->
+  <div class="flex-1 rounded-xl border border-gray-200 bg-white p-2 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+    @if (loading()) {
+      <div class="flex flex-col gap-3 p-3">
+        @for (i of [1, 2, 3, 4, 5]; track i) {
+          <p-skeleton height="2.75rem" />
+        }
+      </div>
+    } @else {
+      <p-table [value]="ventas()" dataKey="id" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} de {totalRecords}" [rowHover]="true"
+        [tableStyle]="{ 'min-width': '56rem' }">
+        <ng-template #header>
+          <tr>
+            <th class="w-20">N.º</th>
+            <th pSortableColumn="fecha">Fecha <p-sorticon field="fecha" /></th>
+            <th>Cliente</th>
+            <th>Cobro</th>
+            <th pSortableColumn="total" class="text-right!">Total <p-sorticon field="total" /></th>
+            <th>Estado</th>
+            <th class="w-28 text-right!">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-v>
+          <tr>
+            <td class="tabular-nums text-gray-500 dark:text-zinc-400">{{ v.id }}</td>
+            <td class="tabular-nums text-gray-700 dark:text-zinc-300">{{ v.fecha | date: 'dd/MM/yy HH:mm' }}</td>
+            <td class="text-gray-900 dark:text-zinc-100">{{ v.cliente ?? 'Público general' }}</td>
+            <td class="text-xs text-gray-500 dark:text-zinc-400">{{ v.metodoPago }} · {{ v.usuario }}</td>
+            <td class="text-right! font-semibold tabular-nums text-gray-900 dark:text-zinc-100"
+              [class.line-through]="v.estado === 'anulada'">{{ v.total | currency: 'PEN' : 'symbol-narrow' }}</td>
+            <td><p-tag [severity]="severidad(v.estado)" [value]="etiqueta(v.estado)" /></td>
+            <td>
+              <div class="flex justify-end gap-1">
+                <p-button icon="pi pi-eye" [text]="true" [rounded]="true" severity="secondary" pTooltip="Ver detalle"
+                  tooltipPosition="top" [ariaLabel]="'Ver detalle de la venta ' + v.id" (onClick)="verDetalle(v)" />
+                @if (esAdministrador && v.estado === 'activa' && !v.cajaCerrada) {
+                  <p-button icon="pi pi-ban" [text]="true" [rounded]="true" severity="danger" pTooltip="Anular venta"
+                    tooltipPosition="top" [ariaLabel]="'Anular la venta ' + v.id" (onClick)="confirmarAnulacion(v)" />
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="7" class="py-12! text-center!">
+              <i class="pi pi-shopping-cart mb-2 text-2xl! text-gray-300 dark:text-zinc-600"></i>
+              <p class="text-sm text-gray-500 dark:text-zinc-400">
+                {{ vista() === 'turno' ? 'Aún no hay ventas en el turno actual.' : 'No hay ventas en este periodo.' }}
+              </p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </div>
+</div>
+
+<!-- Nueva venta -->
+<p-dialog [(visible)]="ventaVisible" header="Nueva venta" [modal]="true" [draggable]="false"
+  [style]="{ width: '50rem' }" [breakpoints]="{ '800px': '95vw' }">
+  @if (verificandoCaja()) {
+    <div class="flex flex-col gap-3">
+      <p-skeleton height="2.5rem" />
+      <p-skeleton height="8rem" />
+    </div>
+  } @else if (!hayCaja()) {
+    <p-message severity="warn" class="block">
+      <span class="flex flex-wrap items-center gap-3">
+        No hay caja abierta. Abre la caja primero.
+        <a routerLink="/caja" class="font-semibold underline">Ir a Caja</a>
+      </span>
+    </p-message>
+  } @else {
+    <div class="flex flex-col gap-5">
+      <!-- ¿Asociar la venta a un cliente? -->
+      <section>
+        <label class="mb-2 flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700 dark:text-zinc-300">
+          <p-toggleswitch [ngModel]="asociarCliente" (ngModelChange)="onAsociarCliente($event)" inputId="asociar" />
+          Asociar a un cliente
+        </label>
+        @if (asociarCliente) {
+          <app-buscar-cliente (seleccionado)="cliente.set($event)" />
+        }
+      </section>
+
+      <!-- Agregar producto y cantidad -->
+      <section>
+        <h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-zinc-100">Productos</h3>
+        <form class="flex flex-wrap items-start gap-2" (ngSubmit)="agregar()">
+          <p-select [options]="productosDisponibles()" [optionLabel]="'nombre'" optionValue="id" name="producto"
+            [(ngModel)]="productoSeleccionado" [filter]="true" filterBy="nombre,categoria" placeholder="Buscar producto"
+            emptyMessage="No hay productos con stock" emptyFilterMessage="Sin coincidencias" appendTo="body"
+            class="min-w-0 flex-1" ariaLabel="Producto">
+            <ng-template #item let-p>
+              <div class="flex w-full items-center justify-between gap-3">
+                <span>{{ p.nombre }} <span class="text-xs text-gray-500">· {{ p.categoria }}</span></span>
+                <span class="text-xs tabular-nums text-gray-500">{{ p.precio | currency: 'PEN' : 'symbol-narrow' }} · stock {{ p.stock }}</span>
+              </div>
+            </ng-template>
+          </p-select>
+          <p-inputnumber name="cantidad" [(ngModel)]="cantidad" [min]="1" [showButtons]="true" buttonLayout="horizontal"
+            inputStyleClass="w-14 text-center" ariaLabel="Cantidad" incrementButtonIcon="pi pi-plus"
+            decrementButtonIcon="pi pi-minus" />
+          <p-button type="submit" label="Agregar" icon="pi pi-plus" severity="secondary" [outlined]="true"
+            [disabled]="productoSeleccionado === null" />
+        </form>
+        @if (avisoStock()) {
+          <p-message severity="warn" class="mt-2 block">{{ avisoStock() }}</p-message>
+        }
+
+        @if (carrito().length) {
+          <ul class="mt-3 divide-y divide-gray-100 rounded-lg border border-gray-200 dark:divide-zinc-800 dark:border-zinc-800">
+            @for (i of carrito(); track i.producto.id) {
+              <li class="flex flex-wrap items-center gap-3 px-3 py-2">
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium text-gray-900 dark:text-zinc-100">{{ i.producto.nombre }}</p>
+                  <p class="text-xs tabular-nums text-gray-500 dark:text-zinc-400">{{ i.producto.precio | currency: 'PEN' : 'symbol-narrow' }} c/u · stock {{ i.producto.stock }}</p>
+                </div>
+                <p-inputnumber [ngModel]="i.cantidad" (ngModelChange)="cambiarCantidad(i, $event)" [min]="1" [max]="i.producto.stock"
+                  inputStyleClass="w-16 text-center" [ariaLabel]="'Cantidad de ' + i.producto.nombre" />
+                <span class="w-24 text-right font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ i.producto.precio * i.cantidad | currency: 'PEN' : 'symbol-narrow' }}</span>
+                <p-button icon="pi pi-times" [text]="true" [rounded]="true" severity="secondary"
+                  [ariaLabel]="'Quitar ' + i.producto.nombre" (onClick)="quitar(i)" />
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="mt-3 rounded-lg border border-dashed border-gray-200 px-3 py-6 text-center text-sm text-gray-500 dark:border-zinc-800 dark:text-zinc-400">
+            Agrega al menos un producto.
+          </p>
+        }
+      </section>
+
+      <!-- Resumen y cobro -->
+      @if (carrito().length) {
+        <section class="flex flex-wrap items-end justify-between gap-4 rounded-lg bg-gray-50 p-3 dark:bg-zinc-800/60">
+          <div class="flex min-w-56 flex-col gap-1.5">
+            <label for="metodoPagoVenta" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Método de pago *</label>
+            <p-select inputId="metodoPagoVenta" [options]="metodos()" optionLabel="nombre" optionValue="id"
+              [(ngModel)]="metodoSeleccionado" placeholder="Selecciona" appendTo="body"
+              emptyMessage="No hay métodos de pago activos" />
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-gray-500 dark:text-zinc-400">Total a cobrar</p>
+            <p class="text-2xl font-bold tabular-nums text-gray-900 dark:text-zinc-100">{{ totalCarrito() | currency: 'PEN' : 'symbol-narrow' }}</p>
+          </div>
+        </section>
+      }
+    </div>
+  }
+
+  <ng-template #footer>
+    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="ventaVisible.set(false)" />
+    @if (hayCaja()) {
+      <p-button label="Cobrar y confirmar" icon="pi pi-check" [loading]="vendiendo()"
+        [disabled]="!carrito().length || metodoSeleccionado === null" (onClick)="confirmarVenta()"
+        styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    }
+  </ng-template>
+</p-dialog>
+
+<!-- Detalle -->
+<p-drawer [(visible)]="detalleVisible" position="right" header="Detalle de venta" [style]="{ width: '30rem' }">
+  @if (cargandoDetalle()) {
+    <div class="flex flex-col gap-3">
+      <p-skeleton height="4rem" />
+      <p-skeleton height="10rem" />
+    </div>
+  } @else if (detalle(); as v) {
+    <div class="flex flex-col gap-5 text-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-lg font-semibold text-gray-900 dark:text-zinc-100">Venta N.º {{ v.id }}</p>
+          <p class="text-xs text-gray-500 dark:text-zinc-400">{{ v.fecha | date: 'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+        <p-tag [severity]="severidad(v.estado)" [value]="etiqueta(v.estado)" />
+      </div>
+      <dl class="grid grid-cols-2 gap-x-4 gap-y-3">
+        <div><dt class="text-xs text-gray-500 dark:text-zinc-400">Cliente</dt><dd class="text-gray-900 dark:text-zinc-100">{{ v.cliente ?? 'Público general' }}</dd></div>
+        <div><dt class="text-xs text-gray-500 dark:text-zinc-400">Atendido por</dt><dd class="text-gray-900 dark:text-zinc-100">{{ v.usuario }}</dd></div>
+        <div><dt class="text-xs text-gray-500 dark:text-zinc-400">Método de pago</dt><dd class="text-gray-900 dark:text-zinc-100">{{ v.metodoPago }}</dd></div>
+      </dl>
+      <ul class="divide-y divide-gray-100 rounded-lg border border-gray-200 dark:divide-zinc-800 dark:border-zinc-800">
+        @for (d of v.detalles ?? []; track d.idProducto) {
+          <li class="flex items-center justify-between gap-3 px-3 py-2.5">
+            <div class="min-w-0">
+              <p class="truncate font-medium text-gray-900 dark:text-zinc-100">{{ d.producto }}</p>
+              <p class="text-xs tabular-nums text-gray-500 dark:text-zinc-400">{{ d.cantidad }} × {{ d.precioUnitario | currency: 'PEN' : 'symbol-narrow' }}</p>
+            </div>
+            <span class="font-semibold tabular-nums">{{ d.subtotal | currency: 'PEN' : 'symbol-narrow' }}</span>
+          </li>
+        }
+      </ul>
+      <div class="flex justify-between text-base font-bold"><span>Total</span><span class="tabular-nums">{{ v.total | currency: 'PEN' : 'symbol-narrow' }}</span></div>
+      @if (esAdministrador && v.estado === 'activa') {
+        @if (v.cajaCerrada) {
+          <p class="text-xs text-gray-500 dark:text-zinc-400">
+            <i class="pi pi-lock mr-1 text-xs!"></i>Su caja ya se cerró: no se puede anular.
+          </p>
+        } @else {
+          <p-button label="Anular venta" icon="pi pi-ban" severity="danger" [outlined]="true" (onClick)="confirmarAnulacion(v)" />
+        }
+      }
+    </div>
+  }
+</p-drawer>
+
+<!-- Comprobante -->
+<p-dialog [visible]="!!comprobante()" (visibleChange)="!$event && comprobante.set(null)" header="Comprobante de venta"
+  [modal]="true" [draggable]="false" [style]="{ width: '26rem' }" [breakpoints]="{ '640px': '95vw' }">
+  @if (comprobante(); as v) {
+    <div class="flex flex-col gap-3 text-sm">
+      <div class="text-center">
+        <i class="pi pi-check-circle text-3xl! text-emerald-600 dark:text-emerald-400"></i>
+        <p class="mt-1 font-semibold text-gray-900 dark:text-zinc-100">Venta registrada · N.º {{ v.id }}</p>
+        <p class="text-xs text-gray-500 dark:text-zinc-400">{{ v.fecha | date: 'dd/MM/yyyy HH:mm' }} · {{ v.cliente ?? 'Público general' }}</p>
+      </div>
+      <ul class="flex flex-col gap-1.5">
+        @for (d of v.detalles ?? []; track d.idProducto) {
+          <li class="flex justify-between gap-3">
+            <span>{{ d.cantidad }} × {{ d.producto }}</span>
+            <span class="tabular-nums">{{ d.subtotal | currency: 'PEN' : 'symbol-narrow' }}</span>
+          </li>
+        }
+      </ul>
+      <div class="flex justify-between gap-3 text-xs text-gray-500 dark:text-zinc-400"><span>Método de pago</span><span>{{ v.metodoPago }}</span></div>
+      <div class="flex justify-between gap-3 border-t border-gray-200 pt-2 text-base font-bold dark:border-zinc-800"><span>Total</span><span class="tabular-nums">{{ v.total | currency: 'PEN' : 'symbol-narrow' }}</span></div>
+    </div>
+  }
+  <ng-template #footer>
+    <p-button label="Aceptar" (onClick)="comprobante.set(null)"
+      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+  </ng-template>
+</p-dialog>

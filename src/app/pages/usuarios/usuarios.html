@@ -1,0 +1,187 @@
+<p-toast position="top-right" />
+
+<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl font-bold text-gray-900 dark:text-zinc-100">Usuarios y roles</h1>
+      <p class="text-sm text-gray-500 dark:text-zinc-400">Personal del gimnasio. Los usuarios de clientes se gestionan en Clientes.</p>
+    </div>
+    <p-button label="Nuevo usuario" icon="pi pi-user-plus" (onClick)="abrirNuevo()"
+      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+  </div>
+
+  <!-- Roles: también filtran la tabla -->
+  @if (roles().length) {
+    <div class="flex flex-wrap gap-2" role="group" aria-label="Filtrar por rol">
+      <button type="button" (click)="filtroRol.set(null)" [attr.aria-pressed]="filtroRol() === null"
+        class="cursor-pointer rounded-lg border px-3 py-1.5 text-sm transition-colors"
+        [class]="filtroRol() === null ? 'border-red-800 bg-red-50 text-red-900 dark:border-red-500 dark:bg-red-950/40 dark:text-red-200' : 'border-gray-200 text-gray-700 hover:border-gray-300 dark:border-zinc-800 dark:text-zinc-300'">
+        Todos <span class="ml-1 tabular-nums text-gray-500 dark:text-zinc-400">{{ usuarios().length }}</span>
+      </button>
+      @for (r of roles(); track r.id) {
+        <button type="button" (click)="filtroRol.set(r.id)" [attr.aria-pressed]="filtroRol() === r.id"
+          class="cursor-pointer rounded-lg border px-3 py-1.5 text-sm transition-colors"
+          [class]="filtroRol() === r.id ? 'border-red-800 bg-red-50 text-red-900 dark:border-red-500 dark:bg-red-950/40 dark:text-red-200' : 'border-gray-200 text-gray-700 hover:border-gray-300 dark:border-zinc-800 dark:text-zinc-300'">
+          {{ r.nombre }} <span class="ml-1 tabular-nums text-gray-500 dark:text-zinc-400">{{ r.usuarios }}</span>
+        </button>
+      }
+    </div>
+  }
+
+  <p-iconfield class="w-full max-w-md">
+    <p-inputicon class="pi pi-search" />
+    <input pInputText type="search" class="w-full" placeholder="Buscar por nombre, usuario, correo o DNI" aria-label="Buscar usuarios"
+      [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)" />
+  </p-iconfield>
+
+  @if (error()) {
+    <p-message severity="error" class="block w-full">
+      <span class="flex flex-wrap items-center gap-3">
+        {{ error() }}
+        <button type="button" class="cursor-pointer font-semibold underline" (click)="cargar()">Reintentar</button>
+      </span>
+    </p-message>
+  }
+
+  <div class="flex-1 rounded-xl border border-gray-200 bg-white p-2 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+    @if (loading()) {
+      <div class="flex flex-col gap-3 p-3">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <p-skeleton height="2.75rem" />
+        }
+      </div>
+    } @else {
+      <p-table [value]="usuariosFiltrados()" dataKey="id" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]"
+        [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} de {totalRecords}" [rowHover]="true"
+        [tableStyle]="{ 'min-width': '52rem' }">
+        <ng-template #header>
+          <tr>
+            <th pSortableColumn="nombre">Persona <p-sorticon field="nombre" /></th>
+            <th pSortableColumn="usuario">Usuario <p-sorticon field="usuario" /></th>
+            <th pSortableColumn="rol">Rol <p-sorticon field="rol" /></th>
+            <th>Activo</th>
+            <th class="w-28 text-right!">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-u>
+          <tr [class.opacity-60]="!u.estado">
+            <td>
+              <p class="font-medium text-gray-900 dark:text-zinc-100">{{ nombreCompleto(u) }}</p>
+              <p class="text-xs text-gray-500 dark:text-zinc-400">{{ u.correo }} · DNI {{ u.dni }}</p>
+            </td>
+            <td class="text-gray-700 dark:text-zinc-300">
+              {{ u.usuario }}
+              @if (u.usuario === usuarioActual) {
+                <span class="ml-1 text-xs text-gray-500 dark:text-zinc-400">(tú)</span>
+              }
+            </td>
+            <td><p-tag [severity]="severidadRol(u.rol)" [value]="u.rol" /></td>
+            <td>
+              <p-toggleswitch [ngModel]="u.estado" (ngModelChange)="cambiarEstado(u, $event)"
+                [disabled]="u.usuario === usuarioActual" [ariaLabel]="(u.estado ? 'Desactivar ' : 'Activar ') + u.usuario" />
+            </td>
+            <td>
+              <div class="flex justify-end gap-1">
+                <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" severity="secondary" pTooltip="Editar"
+                  tooltipPosition="top" [ariaLabel]="'Editar ' + u.usuario" (onClick)="abrirEditar(u)" />
+                <p-button icon="pi pi-key" [text]="true" [rounded]="true" severity="secondary" pTooltip="Restablecer contraseña"
+                  tooltipPosition="top" [ariaLabel]="'Restablecer contraseña de ' + u.usuario" (onClick)="abrirClave(u)" />
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="5" class="py-12! text-center! text-sm text-gray-500 dark:text-zinc-400">Ningún usuario coincide con los filtros.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </div>
+</div>
+
+<!-- Alta / edición -->
+<p-dialog [(visible)]="formVisible" [header]="editando() ? 'Editar usuario' : 'Nuevo usuario'" [modal]="true"
+  [draggable]="false" [style]="{ width: '40rem' }" [breakpoints]="{ '640px': '95vw' }">
+  <form [formGroup]="form" (ngSubmit)="guardar()" class="grid grid-cols-1 gap-4 pt-1 sm:grid-cols-2" novalidate>
+    <div class="flex flex-col gap-1.5">
+      <label for="u-nombre" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Nombre *</label>
+      <input pInputText id="u-nombre" formControlName="nombre" autocomplete="off" [invalid]="invalido('nombre')" />
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="u-ap" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Apellido paterno *</label>
+      <input pInputText id="u-ap" formControlName="apellidoPaterno" autocomplete="off" [invalid]="invalido('apellidoPaterno')" />
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="u-am" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Apellido materno</label>
+      <input pInputText id="u-am" formControlName="apellidoMaterno" autocomplete="off" />
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="u-dni" class="text-sm font-medium text-gray-700 dark:text-zinc-300">DNI *</label>
+      <input pInputText id="u-dni" formControlName="dni" inputmode="numeric" maxlength="8" autocomplete="off" [invalid]="invalido('dni')" />
+      @if (invalido('dni')) {
+        <small class="text-red-600 dark:text-red-400">Debe tener 8 dígitos.</small>
+      }
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="u-correo" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Correo *</label>
+      <input pInputText id="u-correo" type="email" formControlName="correo" autocomplete="off" [invalid]="invalido('correo')" />
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="u-cel" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Celular</label>
+      <input pInputText id="u-cel" formControlName="celular" inputmode="tel" maxlength="9" autocomplete="off" [invalid]="invalido('celular')" />
+      @if (invalido('celular')) {
+        <small class="text-red-600 dark:text-red-400">9 dígitos, empezando con 9.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label for="u-usuario" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Usuario (para iniciar sesión) *</label>
+      <input pInputText id="u-usuario" formControlName="usuario" autocomplete="off" [invalid]="invalido('usuario')" />
+      @if (invalido('usuario')) {
+        <small class="text-red-600 dark:text-red-400">3 a 100 caracteres: letras, números y . _ &#64; -</small>
+      }
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="u-rol" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Rol *</label>
+      <p-select inputId="u-rol" formControlName="idRol" [options]="roles()" optionLabel="nombre" optionValue="id"
+        placeholder="Selecciona" appendTo="body" [invalid]="invalido('idRol')" class="w-full" />
+    </div>
+    @if (!editando()) {
+      <div class="flex flex-col gap-1.5 sm:col-span-2">
+        <label for="u-clave" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Contraseña inicial *</label>
+        <p-password inputId="u-clave" formControlName="contrasena" [feedback]="false" [toggleMask]="true"
+          autocomplete="new-password" [invalid]="invalido('contrasena')" styleClass="w-full" inputStyleClass="w-full" />
+        @if (invalido('contrasena')) {
+          <small class="text-red-600 dark:text-red-400">Mínimo 8 caracteres.</small>
+        } @else {
+          <small class="text-gray-500 dark:text-zinc-400">Comunícasela a la persona; queda marcada como temporal.</small>
+        }
+      </div>
+    }
+  </form>
+  <ng-template #footer>
+    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="formVisible.set(false)" />
+    <p-button [label]="editando() ? 'Guardar cambios' : 'Crear usuario'" icon="pi pi-check" [loading]="guardando()"
+      (onClick)="guardar()" styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+  </ng-template>
+</p-dialog>
+
+<!-- Restablecer contraseña -->
+<p-dialog [(visible)]="claveVisible" header="Restablecer contraseña" [modal]="true" [draggable]="false"
+  [style]="{ width: '26rem' }" [breakpoints]="{ '640px': '95vw' }">
+  @if (usuarioClave(); as u) {
+    <p class="mb-3 text-sm text-gray-600 dark:text-zinc-400">
+      Usuario: <span class="font-medium text-gray-900 dark:text-zinc-100">{{ u.usuario }}</span>
+    </p>
+  }
+  <label for="nueva-clave" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-zinc-300">Nueva contraseña *</label>
+  <p-password inputId="nueva-clave" [(ngModel)]="nuevaClave" [feedback]="false" [toggleMask]="true"
+    autocomplete="new-password" styleClass="w-full" inputStyleClass="w-full" />
+  <small class="mt-1 block text-gray-500 dark:text-zinc-400">Mínimo 8 caracteres. La anterior deja de funcionar.</small>
+  <ng-template #footer>
+    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="claveVisible.set(false)" />
+    <p-button label="Restablecer" icon="pi pi-key" [loading]="guardandoClave()" [disabled]="nuevaClave.length < 8"
+      (onClick)="guardarClave()" styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+  </ng-template>
+</p-dialog>
