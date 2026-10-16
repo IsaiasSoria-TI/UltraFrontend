@@ -8,7 +8,7 @@
       @if (!loading() && !error()) {
         <p class="text-sm text-gray-500 dark:text-zinc-400">
           {{ productos().length }} producto{{ productos().length === 1 ? '' : 's' }} ·
-          {{ totalStockBajo() }} con stock bajo (≤ {{ stockMinimo }})
+          {{ totalStockBajo() }} con stock bajo
         </p>
       }
     </div>
@@ -56,6 +56,7 @@
             <th pSortableColumn="categoria">Categoría <p-sorticon field="categoria" /></th>
             <th pSortableColumn="precio" class="text-right!">Precio <p-sorticon field="precio" /></th>
             <th pSortableColumn="stock" class="text-right!">Stock <p-sorticon field="stock" /></th>
+            <th pSortableColumn="stockMinimo" class="text-right!">Mínimo <p-sorticon field="stockMinimo" /></th>
             <th class="w-28 text-right!">Acciones</th>
           </tr>
         </ng-template>
@@ -67,12 +68,13 @@
             <td class="text-right!">
               @if (p.stock === 0) {
                 <p-tag severity="danger" value="Agotado" />
-              } @else if (p.stock <= stockMinimo) {
+              } @else if (p.stock <= p.stockMinimo) {
                 <p-tag severity="warn" [value]="p.stock + ' · bajo'" />
               } @else {
                 <span class="tabular-nums text-gray-900 dark:text-zinc-100">{{ p.stock }}</span>
               }
             </td>
+            <td class="text-right! tabular-nums text-gray-500 dark:text-zinc-400">{{ p.stockMinimo }}</td>
             <td>
               <div class="flex justify-end gap-1">
                 <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" severity="secondary" pTooltip="Editar"
@@ -85,7 +87,7 @@
         </ng-template>
         <ng-template #emptymessage>
           <tr>
-            <td colspan="5" class="py-12! text-center! text-sm text-gray-500 dark:text-zinc-400">
+            <td colspan="6" class="py-12! text-center! text-sm text-gray-500 dark:text-zinc-400">
               {{ productos().length ? 'Ningún producto coincide con los filtros.' : 'Aún no hay productos.' }}
             </td>
           </tr>
@@ -125,9 +127,11 @@
       <p-inputnumber inputId="stock" formControlName="stock" [min]="0" [useGrouping]="false" [invalid]="invalido('stock')"
         inputStyleClass="w-full" />
     </div>
-    <small class="col-span-2 text-gray-500 dark:text-zinc-400">
-      El stock sube con las compras y baja con las ventas; edítalo aquí solo para corregir el inventario.
-    </small>
+    <div class="col-span-2 flex flex-col gap-1.5">
+      <label for="stockMinimo" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Stock mínimo *</label>
+      <p-inputnumber inputId="stockMinimo" formControlName="stockMinimo" [min]="0" [useGrouping]="false"
+        [invalid]="invalido('stockMinimo')" inputStyleClass="w-full" />
+    </div>
   </form>
   <ng-template #footer>
     <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="formVisible.set(false)" />

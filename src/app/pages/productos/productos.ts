@@ -22,8 +22,8 @@ import { Producto } from '../../models/venta.model';
 import { Categoria, ProductoRequest } from '../../models/admin.model';
 import { mensajeError } from '../../utils/http-error';
 
-// Mismo umbral que "stock bajo" del dashboard
-const STOCK_MINIMO = 5;
+// Valor sugerido al crear un producto; luego cada uno tiene el suyo
+const STOCK_MINIMO_INICIAL = 5;
 
 // Caso de uso "Gestionar productos" (Administrador)
 @Component({
@@ -57,7 +57,6 @@ export class ProductosComponent implements OnInit {
   private readonly confirmationService = inject(ConfirmationService);
   private readonly fb = inject(FormBuilder);
 
-  readonly stockMinimo = STOCK_MINIMO;
   readonly productos = signal<Producto[]>([]);
   readonly categorias = signal<Categoria[]>([]);
   readonly loading = signal(true);
@@ -72,7 +71,7 @@ export class ProductosComponent implements OnInit {
       (p) => (categoria === null || p.idCategoria === categoria) && (!texto || p.nombre.toLowerCase().includes(texto)),
     );
   });
-  readonly totalStockBajo = computed(() => this.productos().filter((p) => p.stock <= STOCK_MINIMO).length);
+  readonly totalStockBajo = computed(() => this.productos().filter((p) => p.stock <= p.stockMinimo).length);
 
   // Formulario de producto
   readonly formVisible = signal(false);
@@ -83,6 +82,7 @@ export class ProductosComponent implements OnInit {
     idCategoria: [null as number | null, Validators.required],
     precio: [null as number | null, [Validators.required, Validators.min(0.01)]],
     stock: [0 as number | null, [Validators.required, Validators.min(0)]],
+    stockMinimo: [STOCK_MINIMO_INICIAL as number | null, [Validators.required, Validators.min(0)]],
   });
 
   // Categorías
@@ -116,13 +116,13 @@ export class ProductosComponent implements OnInit {
 
   abrirNuevo(): void {
     this.editando.set(null);
-    this.form.reset({ stock: 0 });
+    this.form.reset({ stock: 0, stockMinimo: STOCK_MINIMO_INICIAL });
     this.formVisible.set(true);
   }
 
   abrirEditar(p: Producto): void {
     this.editando.set(p);
-    this.form.reset({ nombre: p.nombre, idCategoria: p.idCategoria, precio: p.precio, stock: p.stock });
+    this.form.reset({ nombre: p.nombre, idCategoria: p.idCategoria, precio: p.precio, stock: p.stock, stockMinimo: p.stockMinimo });
     this.formVisible.set(true);
   }
 
@@ -132,7 +132,13 @@ export class ProductosComponent implements OnInit {
       return;
     }
     const v = this.form.getRawValue();
-    const datos: ProductoRequest = { nombre: v.nombre!.trim(), idCategoria: v.idCategoria!, precio: v.precio!, stock: v.stock! };
+    const datos: ProductoRequest = {
+      nombre: v.nombre!.trim(),
+      idCategoria: v.idCategoria!,
+      precio: v.precio!,
+      stock: v.stock!,
+      stockMinimo: v.stockMinimo!,
+    };
 
     this.guardando.set(true);
     try {
@@ -177,7 +183,7 @@ export class ProductosComponent implements OnInit {
     });
   }
 
-  invalido(campo: 'nombre' | 'idCategoria' | 'precio' | 'stock'): boolean {
+  invalido(campo: 'nombre' | 'idCategoria' | 'precio' | 'stock' | 'stockMinimo'): boolean {
     const c = this.form.controls[campo];
     return c.invalid && (c.dirty || c.touched);
   }

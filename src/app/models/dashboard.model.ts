@@ -23,6 +23,8 @@ export interface ProductoStockBajo {
 	id: number;
 	nombre: string;
 	stock: number;
+	// Stock bajo cuando stock <= stockMinimo
+	stockMinimo: number;
 }
 
 export interface UltimaVenta {

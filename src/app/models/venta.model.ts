@@ -7,6 +7,8 @@ export interface Producto {
 	categoria: string;
 	precio: number;
 	stock: number;
+	// Stock bajo cuando stock <= stockMinimo
+	stockMinimo: number;
 }
 
 export interface DetalleVenta {

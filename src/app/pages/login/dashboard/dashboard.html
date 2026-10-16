@@ -242,7 +242,7 @@
       <article class="flex flex-col rounded-xl border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 p-5 shadow-xs">
         <div class="mb-4">
           <h2 class="text-base font-semibold text-gray-900 dark:text-zinc-100">Stock bajo</h2>
-          <p class="text-xs text-gray-500 dark:text-zinc-400">Productos con 5 unidades o menos</p>
+          <p class="text-xs text-gray-500 dark:text-zinc-400">Productos en o por debajo de su stock mínimo</p>
         </div>
         @if (r.productosStockBajo.length) {
           <ul class="divide-y divide-gray-100 dark:divide-zinc-800">
@@ -252,7 +252,7 @@
                 @if (p.stock === 0) {
                   <p-tag severity="danger" icon="pi pi-times-circle" value="Agotado" class="shrink-0" />
                 } @else {
-                  <p-tag severity="warn" icon="pi pi-exclamation-triangle" [value]="p.stock + ' uds.'" class="shrink-0" />
+                  <p-tag severity="warn" icon="pi pi-exclamation-triangle" [value]="p.stock + ' / mín. ' + p.stockMinimo" class="shrink-0" />
                 }
               </li>
             }

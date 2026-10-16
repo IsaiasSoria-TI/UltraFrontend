@@ -10,6 +10,8 @@ export interface ProductoRequest {
 	nombre: string;
 	precio: number;
 	stock: number;
+	// Stock bajo cuando stock <= stockMinimo
+	stockMinimo: number;
 }
 
 export interface PlanRequest {
