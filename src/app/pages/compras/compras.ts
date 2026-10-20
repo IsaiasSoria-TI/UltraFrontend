@@ -3,7 +3,6 @@ import { CurrencyPipe, DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
@@ -19,6 +18,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageModule } from 'primeng/message';
+import { BotonCancelarComponent, BotonIconoComponent, BotonPrincipalComponent, BotonSecundarioComponent, BotonTextoComponent } from '../../components/botones';
 import { CajaService } from '../../services/caja.service';
 import { CompraService } from '../../services/compra.service';
 import { VentaService } from '../../services/venta.service';
@@ -48,7 +48,6 @@ interface LineaCompra {
     DecimalPipe,
     NgTemplateOutlet,
     FormsModule,
-    ButtonModule,
     TableModule,
     TagModule,
     DialogModule,
@@ -64,6 +63,11 @@ interface LineaCompra {
     TooltipModule,
     SkeletonModule,
     MessageModule,
+    BotonCancelarComponent,
+    BotonIconoComponent,
+    BotonPrincipalComponent,
+    BotonSecundarioComponent,
+    BotonTextoComponent,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './compras.html',

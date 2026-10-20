@@ -3,12 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Producto } from '../models/venta.model';
 import { Categoria, ProductoRequest } from '../models/admin.model';
+import { environment } from '../../environments/environment';
 
 // Gestión de productos y categorías (Administrador)
 @Injectable({ providedIn: 'root' })
 export class ProductoService {
 	private readonly http = inject(HttpClient);
-	private readonly apiUrl = 'http://localhost:8080';
+	private readonly apiUrl = environment.apiUrl;
 
 	listar(): Observable<Producto[]> {
 		return this.http.get<Producto[]>(`${this.apiUrl}/productos`);

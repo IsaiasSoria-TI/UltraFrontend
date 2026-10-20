@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AvatarModule } from 'primeng/avatar';
 import { TagModule } from 'primeng/tag';
@@ -29,6 +29,11 @@ export class SidebarComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   protected readonly themeService = inject(ThemeService);
+
+  // Solo aplican en móvil/tablet: en escritorio el sidebar siempre está visible
+  readonly abierto = input(false);
+  readonly movil = input(false);
+  readonly cerrar = output<void>();
 
   readonly username = this.authService.getUsername();
   readonly rol = this.authService.getRol();

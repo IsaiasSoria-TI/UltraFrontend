@@ -2,11 +2,11 @@ import { Component, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { TagModule } from 'primeng/tag';
+import { BotonCancelarComponent, BotonPrincipalComponent, BotonSecundarioComponent, BotonTextoComponent } from '../botones';
 import { ClienteService } from '../../services/cliente.service';
 import { Cliente, ClienteRequest } from '../../models/cliente.model';
 import { esNoEncontrado, mensajeError } from '../../utils/http-error';
@@ -19,7 +19,7 @@ import { esNoEncontrado, mensajeError } from '../../utils/http-error';
 @Component({
   selector: 'app-buscar-cliente',
   standalone: true,
-  imports: [FormsModule, ReactiveFormsModule, ButtonModule, DialogModule, InputTextModule, MessageModule, TagModule],
+  imports: [FormsModule, ReactiveFormsModule, DialogModule, InputTextModule, MessageModule, TagModule, BotonCancelarComponent, BotonPrincipalComponent, BotonSecundarioComponent, BotonTextoComponent],
   template: `
     @if (cliente(); as c) {
       <div class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2.5 dark:border-zinc-800">
@@ -32,14 +32,13 @@ import { esNoEncontrado, mensajeError } from '../../utils/http-error';
             <p class="truncate text-xs text-gray-500 dark:text-zinc-400">{{ c.correo }} · DNI {{ c.dni }}</p>
           </div>
         </div>
-        <p-button label="Cambiar" [text]="true" size="small" severity="secondary" (onClick)="limpiar()" />
+        <app-boton-texto texto="Cambiar" (clic)="limpiar()" />
       </div>
     } @else {
       <form class="flex gap-2" (ngSubmit)="buscar()" novalidate>
         <input pInputText type="email" name="correo" class="min-w-0 flex-1" placeholder="correo@ejemplo.com"
           aria-label="Correo del cliente" autocomplete="off" [(ngModel)]="correo" />
-        <p-button type="submit" icon="pi pi-search" label="Buscar" severity="secondary" [outlined]="true"
-          [loading]="buscando()" [disabled]="!correo.trim()" />
+        <app-boton-secundario texto="Buscar" icono="pi pi-search" [cargando]="buscando()" [deshabilitado]="!correo.trim()" tipo="submit" />
       </form>
       @if (noEncontrado()) {
         <p-message severity="warn" class="mt-2 block">
@@ -89,9 +88,8 @@ import { esNoEncontrado, mensajeError } from '../../utils/http-error';
         </div>
       </form>
       <ng-template #footer>
-        <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="registroVisible.set(false)" />
-        <p-button label="Registrar" icon="pi pi-check" [loading]="registrando()" (onClick)="registrar()"
-          styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white!" />
+        <app-boton-cancelar (clic)="registroVisible.set(false)" />
+        <app-boton-principal texto="Registrar" icono="pi pi-check" [cargando]="registrando()" (clic)="registrar()" />
       </ng-template>
     </p-dialog>
   `,

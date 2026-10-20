@@ -1,7 +1,7 @@
 <p-toast position="top-right" />
 <p-confirmdialog [style]="{ width: '28rem' }" />
 
-<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+<div class="flex min-h-[calc(100dvh-3.5rem)] w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:min-h-dvh lg:px-8">
   <!-- Encabezado -->
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
@@ -12,8 +12,7 @@
         </p>
       }
     </div>
-    <p-button label="Vender o renovar" icon="pi pi-id-card" (onClick)="abrirVenta()"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-principal texto="Vender o renovar" icono="pi pi-id-card" (clic)="abrirVenta()" />
   </div>
 
   <!-- Filtros -->
@@ -77,8 +76,7 @@
             <td>
               <div class="flex justify-end">
                 @if (esAdministrador && (m.estado === 'activo' || m.estado === 'programado') && !m.cajaCerrada) {
-                  <p-button icon="pi pi-ban" [text]="true" [rounded]="true" severity="danger" pTooltip="Cancelar membresía"
-                    tooltipPosition="top" [ariaLabel]="'Cancelar membresía de ' + m.cliente" (onClick)="confirmarCancelacion(m)" />
+                  <app-boton-icono accion="anular" [etiqueta]="'Cancelar membresía de ' + m.cliente" tooltip="Cancelar membresía" (clic)="confirmarCancelacion(m)" />
                 }
               </div>
             </td>
@@ -194,12 +192,9 @@
   }
 
   <ng-template #footer>
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="ventaVisible.set(false)" />
+    <app-boton-cancelar (clic)="ventaVisible.set(false)" />
     @if (hayCaja()) {
-      <p-button [label]="cotizacion() ? 'Cobrar ' + (cotizacion()!.monto | currency: 'PEN' : 'symbol-narrow') : 'Cobrar'"
-        icon="pi pi-check" [loading]="vendiendo()" [disabled]="!cotizacion() || metodoSeleccionado === null"
-        (onClick)="confirmarVenta()"
-        styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+      <app-boton-principal [texto]="cotizacion() ? 'Cobrar ' + (cotizacion()!.monto | currency: 'PEN' : 'symbol-narrow') : 'Cobrar'" icono="pi pi-check" [cargando]="vendiendo()" [deshabilitado]="!cotizacion() || metodoSeleccionado === null" (clic)="confirmarVenta()" />
     }
   </ng-template>
 </p-dialog>
@@ -226,7 +221,6 @@
     </div>
   }
   <ng-template #footer>
-    <p-button label="Aceptar" (onClick)="comprobante.set(null)"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-principal texto="Aceptar" (clic)="comprobante.set(null)" />
   </ng-template>
 </p-dialog>

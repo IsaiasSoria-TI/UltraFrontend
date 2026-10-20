@@ -1,7 +1,7 @@
 <p-toast position="top-right" />
 <p-confirmdialog [style]="{ width: '28rem' }" />
 
-<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+<div class="flex min-h-[calc(100dvh-3.5rem)] w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:min-h-dvh lg:px-8">
   <!-- Encabezado -->
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
@@ -13,12 +13,7 @@
         </p>
       }
     </div>
-    <p-button
-      label="Nuevo cliente"
-      icon="pi pi-user-plus"
-      (onClick)="abrirNuevo()"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white!"
-    />
+    <app-boton-principal texto="Nuevo cliente" icono="pi pi-user-plus" (clic)="abrirNuevo()" />
   </div>
 
   <!-- Filtros -->
@@ -121,23 +116,11 @@
             <td class="text-gray-700 dark:text-zinc-300">{{ c.fechaRegistro | date: 'dd/MM/yyyy' }}</td>
             <td>
               <div class="flex justify-end gap-1">
-                <p-button icon="pi pi-eye" [text]="true" [rounded]="true" severity="secondary"
-                  pTooltip="Ver datos" tooltipPosition="top" [ariaLabel]="'Ver datos de ' + nombreCompleto(c)"
-                  (onClick)="verDetalle(c)" />
-                <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" severity="secondary"
-                  pTooltip="Editar" tooltipPosition="top" [ariaLabel]="'Editar a ' + nombreCompleto(c)"
-                  (onClick)="abrirEditar(c)" />
-                <p-button icon="pi pi-user-edit" [text]="true" [rounded]="true" severity="secondary"
-                  pTooltip="Asignar entrenador" tooltipPosition="top" [ariaLabel]="'Asignar entrenador a ' + nombreCompleto(c)"
-                  (onClick)="abrirEntrenador(c)" />
-                <p-button icon="pi pi-envelope" [text]="true" [rounded]="true" severity="secondary"
-                  [disabled]="!c.tieneUsuario"
-                  [pTooltip]="c.tieneUsuario ? 'Reenviar contraseña temporal' : 'Sin usuario'" tooltipPosition="top"
-                  [ariaLabel]="'Reenviar contraseña a ' + nombreCompleto(c)"
-                  (onClick)="confirmarReenvio(c)" />
-                <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger"
-                  pTooltip="Eliminar" tooltipPosition="top" [ariaLabel]="'Eliminar a ' + nombreCompleto(c)"
-                  (onClick)="confirmarEliminacion(c)" />
+                <app-boton-icono accion="ver" [etiqueta]="'Ver datos de ' + nombreCompleto(c)" tooltip="Ver datos" (clic)="verDetalle(c)" />
+                <app-boton-icono accion="editar" [etiqueta]="'Editar a ' + nombreCompleto(c)" tooltip="Editar" (clic)="abrirEditar(c)" />
+                <app-boton-icono accion="asignar" [etiqueta]="'Asignar entrenador a ' + nombreCompleto(c)" tooltip="Asignar entrenador" (clic)="abrirEntrenador(c)" />
+                <app-boton-icono accion="correo" [etiqueta]="'Reenviar contraseña a ' + nombreCompleto(c)" [tooltip]="c.tieneUsuario ? 'Reenviar contraseña temporal' : 'Sin usuario'" [deshabilitado]="!c.tieneUsuario" (clic)="confirmarReenvio(c)" />
+                <app-boton-icono accion="eliminar" [etiqueta]="'Eliminar a ' + nombreCompleto(c)" tooltip="Eliminar" (clic)="confirmarEliminacion(c)" />
               </div>
             </td>
           </tr>
@@ -228,14 +211,8 @@
   </form>
 
   <ng-template #footer>
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="formVisible.set(false)" />
-    <p-button
-      [label]="editando() ? 'Guardar cambios' : 'Registrar'"
-      icon="pi pi-check"
-      [loading]="guardando()"
-      (onClick)="guardar()"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white!"
-    />
+    <app-boton-cancelar (clic)="formVisible.set(false)" />
+    <app-boton-principal [texto]="editando() ? 'Guardar cambios' : 'Registrar'" icono="pi pi-check" [cargando]="guardando()" (clic)="guardar()" />
   </ng-template>
 </p-dialog>
 
@@ -341,13 +318,7 @@
   />
 
   <ng-template #footer>
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="entrenadorVisible.set(false)" />
-    <p-button
-      label="Guardar"
-      icon="pi pi-check"
-      [loading]="asignando()"
-      (onClick)="guardarEntrenador()"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white!"
-    />
+    <app-boton-cancelar (clic)="entrenadorVisible.set(false)" />
+    <app-boton-principal texto="Guardar" icono="pi pi-check" [cargando]="asignando()" (clic)="guardarEntrenador()" />
   </ng-template>
 </p-dialog>

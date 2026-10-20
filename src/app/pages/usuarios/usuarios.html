@@ -1,13 +1,12 @@
 <p-toast position="top-right" />
 
-<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+<div class="flex min-h-[calc(100dvh-3.5rem)] w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:min-h-dvh lg:px-8">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
       <h1 class="text-xl font-bold text-gray-900 dark:text-zinc-100">Usuarios y roles</h1>
       <p class="text-sm text-gray-500 dark:text-zinc-400">Personal del gimnasio. Los usuarios de clientes se gestionan en Clientes.</p>
     </div>
-    <p-button label="Nuevo usuario" icon="pi pi-user-plus" (onClick)="abrirNuevo()"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-principal texto="Nuevo usuario" icono="pi pi-user-plus" (clic)="abrirNuevo()" />
   </div>
 
   <!-- Roles: también filtran la tabla -->
@@ -82,10 +81,8 @@
             </td>
             <td>
               <div class="flex justify-end gap-1">
-                <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" severity="secondary" pTooltip="Editar"
-                  tooltipPosition="top" [ariaLabel]="'Editar ' + u.usuario" (onClick)="abrirEditar(u)" />
-                <p-button icon="pi pi-key" [text]="true" [rounded]="true" severity="secondary" pTooltip="Restablecer contraseña"
-                  tooltipPosition="top" [ariaLabel]="'Restablecer contraseña de ' + u.usuario" (onClick)="abrirClave(u)" />
+                <app-boton-icono accion="editar" [etiqueta]="'Editar ' + u.usuario" tooltip="Editar" (clic)="abrirEditar(u)" />
+                <app-boton-icono accion="clave" [etiqueta]="'Restablecer contraseña de ' + u.usuario" tooltip="Restablecer contraseña" (clic)="abrirClave(u)" />
               </div>
             </td>
           </tr>
@@ -161,9 +158,8 @@
     }
   </form>
   <ng-template #footer>
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="formVisible.set(false)" />
-    <p-button [label]="editando() ? 'Guardar cambios' : 'Crear usuario'" icon="pi pi-check" [loading]="guardando()"
-      (onClick)="guardar()" styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-cancelar (clic)="formVisible.set(false)" />
+    <app-boton-principal [texto]="editando() ? 'Guardar cambios' : 'Crear usuario'" icono="pi pi-check" [cargando]="guardando()" (clic)="guardar()" />
   </ng-template>
 </p-dialog>
 
@@ -180,8 +176,7 @@
     autocomplete="new-password" styleClass="w-full" inputStyleClass="w-full" />
   <small class="mt-1 block text-gray-500 dark:text-zinc-400">Mínimo 8 caracteres. La anterior deja de funcionar.</small>
   <ng-template #footer>
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="claveVisible.set(false)" />
-    <p-button label="Restablecer" icon="pi pi-key" [loading]="guardandoClave()" [disabled]="nuevaClave.length < 8"
-      (onClick)="guardarClave()" styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-cancelar (clic)="claveVisible.set(false)" />
+    <app-boton-principal texto="Restablecer" icono="pi pi-key" [cargando]="guardandoClave()" [deshabilitado]="nuevaClave.length < 8" (clic)="guardarClave()" />
   </ng-template>
 </p-dialog>

@@ -3,11 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ClienteMembresia, Cotizacion, Plan, VenderMembresiaRequest } from '../models/membresia.model';
 import { PlanRequest } from '../models/admin.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class MembresiaService {
 	private readonly http = inject(HttpClient);
-	private readonly apiUrl = 'http://localhost:8080/membresias';
+	private readonly apiUrl = `${environment.apiUrl}/membresias`;
 
 	listar(): Observable<ClienteMembresia[]> {
 		return this.http.get<ClienteMembresia[]>(this.apiUrl);

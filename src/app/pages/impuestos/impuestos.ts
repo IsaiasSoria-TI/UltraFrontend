@@ -3,7 +3,6 @@ import { DecimalPipe } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
@@ -14,6 +13,7 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageModule } from 'primeng/message';
+import { BotonCancelarComponent, BotonIconoComponent, BotonPrincipalComponent } from '../../components/botones';
 import { ImpuestoService } from '../../services/impuesto.service';
 import { Impuesto } from '../../models/compra.model';
 import { mensajeError } from '../../utils/http-error';
@@ -29,7 +29,6 @@ import { mensajeError } from '../../utils/http-error';
     DecimalPipe,
     FormsModule,
     ReactiveFormsModule,
-    ButtonModule,
     TableModule,
     TagModule,
     DialogModule,
@@ -40,6 +39,9 @@ import { mensajeError } from '../../utils/http-error';
     TooltipModule,
     SkeletonModule,
     MessageModule,
+    BotonCancelarComponent,
+    BotonIconoComponent,
+    BotonPrincipalComponent,
   ],
   providers: [MessageService],
   templateUrl: './impuestos.html',

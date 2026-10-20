@@ -3,7 +3,6 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
@@ -11,7 +10,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageModule } from 'primeng/message';
-import { TooltipModule } from 'primeng/tooltip';
+import { BotonCancelarComponent, BotonIconoComponent, BotonPrincipalComponent } from '../../components/botones';
 import { CajaService } from '../../services/caja.service';
 import { Caja } from '../../models/caja.model';
 import { mensajeError } from '../../utils/http-error';
@@ -27,7 +26,6 @@ import { mensajeError } from '../../utils/http-error';
     CurrencyPipe,
     DatePipe,
     FormsModule,
-    ButtonModule,
     TableModule,
     TagModule,
     DialogModule,
@@ -35,7 +33,9 @@ import { mensajeError } from '../../utils/http-error';
     ToastModule,
     SkeletonModule,
     MessageModule,
-    TooltipModule,
+    BotonCancelarComponent,
+    BotonIconoComponent,
+    BotonPrincipalComponent,
   ],
   providers: [MessageService],
   templateUrl: './caja.html',

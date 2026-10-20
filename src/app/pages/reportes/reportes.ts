@@ -2,10 +2,10 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
-import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageModule } from 'primeng/message';
+import { BotonSecundarioComponent, BotonTextoComponent } from '../../components/botones';
 import { ReporteService } from '../../services/reporte.service';
 import { Reporte } from '../../models/admin.model';
 import { fechaIso, mensajeError } from '../../utils/http-error';
@@ -25,7 +25,7 @@ interface Barra {
 @Component({
   selector: 'app-reportes',
   standalone: true,
-  imports: [CurrencyPipe, DatePipe, FormsModule, ButtonModule, InputTextModule, SkeletonModule, MessageModule],
+  imports: [CurrencyPipe, DatePipe, FormsModule, InputTextModule, SkeletonModule, MessageModule, BotonSecundarioComponent, BotonTextoComponent],
   templateUrl: './reportes.html',
 })
 export class ReportesComponent implements OnInit {

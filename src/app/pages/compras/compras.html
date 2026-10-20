@@ -1,7 +1,7 @@
 <p-toast position="top-right" />
 <p-confirmdialog [style]="{ width: '28rem' }" />
 
-<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+<div class="flex min-h-[calc(100dvh-3.5rem)] w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:min-h-dvh lg:px-8">
   <!-- Encabezado -->
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
@@ -12,8 +12,7 @@
         </p>
       }
     </div>
-    <p-button label="Registrar compra" icon="pi pi-truck" (onClick)="abrirRegistro()"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-principal texto="Registrar compra" icono="pi pi-truck" (clic)="abrirRegistro()" />
   </div>
 
   <p-iconfield class="w-full max-w-md">
@@ -73,8 +72,7 @@
             <td class="text-right! font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ c.total | currency: 'PEN' : 'symbol-narrow' }}</td>
             <td>
               <div class="flex justify-end">
-                <p-button icon="pi pi-eye" [text]="true" [rounded]="true" severity="secondary" pTooltip="Ver detalle"
-                  tooltipPosition="top" [ariaLabel]="'Ver detalle de la factura ' + c.codigoFactura" (onClick)="verDetalle(c)" />
+                <app-boton-icono accion="ver" [etiqueta]="'Ver detalle de la factura ' + c.codigoFactura" tooltip="Ver detalle" (clic)="verDetalle(c)" />
               </div>
             </td>
           </tr>
@@ -118,7 +116,7 @@
               · Factura <span class="font-medium tabular-nums">{{ codigoFactura }}</span>
               · {{ fechaCompra | date: 'dd/MM/yyyy' }}
             </span>
-            <p-button label="Cambiar" [text]="true" size="small" severity="secondary" (onClick)="cambiarFactura()" />
+            <app-boton-texto texto="Cambiar" (clic)="cambiarFactura()" />
           </div>
         } @else {
           <form class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_12rem_10rem_auto] sm:items-end" (ngSubmit)="verificarFactura()" novalidate>
@@ -136,8 +134,7 @@
               <label for="fechaCompra" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Fecha *</label>
               <input pInputText id="fechaCompra" name="fechaCompra" type="date" [(ngModel)]="fechaCompra" [max]="hoy" />
             </div>
-            <p-button type="submit" label="Verificar" icon="pi pi-check-circle" severity="secondary" [outlined]="true"
-              [loading]="verificando()" />
+            <app-boton-secundario texto="Verificar" icono="pi pi-check-circle" [cargando]="verificando()" tipo="submit" />
           </form>
           @if (avisoFactura()) {
             <p-message severity="warn" class="mt-2 block">{{ avisoFactura() }}</p-message>
@@ -173,7 +170,7 @@
                 <ng-template #item let-i>{{ i.nombre }} ({{ i.porcentaje }}%)</ng-template>
               </p-select>
             </div>
-            <p-button type="submit" icon="pi pi-plus" label="Agregar" severity="secondary" [outlined]="true" />
+            <app-boton-secundario texto="Agregar" icono="pi pi-plus" tipo="submit" />
           </form>
           @if (errorLinea()) {
             <p-message severity="error" class="mt-2 block">{{ errorLinea() }}</p-message>
@@ -204,8 +201,7 @@
                         <span class="text-xs text-gray-500 dark:text-zinc-400">({{ l.impuesto.porcentaje | number: '1.0-2' }}%)</span>
                       </td>
                       <td class="px-1 py-1 text-right">
-                        <p-button icon="pi pi-times" [text]="true" [rounded]="true" severity="secondary"
-                          [ariaLabel]="'Quitar ' + l.producto.nombre" (onClick)="quitarLinea($index)" />
+                        <app-boton-icono accion="quitar" [etiqueta]="'Quitar ' + l.producto.nombre" (clic)="quitarLinea($index)" />
                       </td>
                     </tr>
                   }
@@ -244,10 +240,8 @@
   }
 
   <ng-template #footer>
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="registroVisible.set(false)" />
-    <p-button label="Confirmar compra" icon="pi pi-check" [loading]="guardando()"
-      [disabled]="!facturaVerificada() || !lineas().length" (onClick)="confirmarCompra()"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-cancelar (clic)="registroVisible.set(false)" />
+    <app-boton-principal texto="Confirmar compra" icono="pi pi-check" [cargando]="guardando()" [deshabilitado]="!facturaVerificada() || !lineas().length" (clic)="confirmarCompra()" />
   </ng-template>
 </p-dialog>
 
@@ -274,8 +268,7 @@
     <ng-container *ngTemplateOutlet="resumenCompra; context: { $implicit: c }" />
   }
   <ng-template #footer>
-    <p-button label="Aceptar" (onClick)="comprobante.set(null)"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-principal texto="Aceptar" (clic)="comprobante.set(null)" />
   </ng-template>
 </p-dialog>
 

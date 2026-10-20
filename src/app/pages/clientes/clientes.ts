@@ -4,7 +4,6 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
@@ -17,9 +16,9 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { TooltipModule } from 'primeng/tooltip';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageModule } from 'primeng/message';
+import { BotonCancelarComponent, BotonIconoComponent, BotonPrincipalComponent } from '../../components/botones';
 import { ClienteService } from '../../services/cliente.service';
 import { Cliente, ClienteDetalle, ClienteRequest, Entrenador, MembresiaCliente } from '../../models/cliente.model';
 
@@ -32,7 +31,6 @@ type FiltroMembresia = 'todos' | 'con' | 'sin';
     DatePipe,
     FormsModule,
     ReactiveFormsModule,
-    ButtonModule,
     TableModule,
     TagModule,
     DialogModule,
@@ -45,9 +43,11 @@ type FiltroMembresia = 'todos' | 'con' | 'sin';
     InputIconModule,
     ToastModule,
     ConfirmDialogModule,
-    TooltipModule,
     SkeletonModule,
     MessageModule,
+    BotonCancelarComponent,
+    BotonIconoComponent,
+    BotonPrincipalComponent,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './clientes.html',

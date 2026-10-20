@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './pages/login/login';
 import { authGuard } from './guards/auth.guard';
 import { adminGuard } from './guards/admin.guard';
 
@@ -12,7 +11,7 @@ export const routes: Routes = [
 
     {
     path: 'login',
-    component: LoginComponent
+    loadComponent: () => import('./pages/login/login').then((m) => m.LoginComponent)
     },
     {
     // Pantallas internas: comparten el sidebar y se cargan bajo demanda

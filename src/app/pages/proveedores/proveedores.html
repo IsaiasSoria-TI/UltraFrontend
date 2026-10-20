@@ -1,7 +1,7 @@
 <p-toast position="top-right" />
 <p-confirmdialog [style]="{ width: '28rem' }" />
 
-<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+<div class="flex min-h-[calc(100dvh-3.5rem)] w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:min-h-dvh lg:px-8">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
       <h1 class="text-xl font-bold text-gray-900 dark:text-zinc-100">Proveedores</h1>
@@ -9,8 +9,7 @@
         <p class="text-sm text-gray-500 dark:text-zinc-400">{{ proveedores().length }} registrado{{ proveedores().length === 1 ? '' : 's' }}</p>
       }
     </div>
-    <p-button label="Nuevo proveedor" icon="pi pi-plus" (onClick)="abrirNuevo()"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-principal texto="Nuevo proveedor" icono="pi pi-plus" (clic)="abrirNuevo()" />
   </div>
 
   <p-iconfield class="w-full max-w-md">
@@ -54,10 +53,8 @@
             <td class="tabular-nums text-gray-700 dark:text-zinc-300">{{ p.telefono ?? '—' }}</td>
             <td>
               <div class="flex justify-end gap-1">
-                <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" severity="secondary" pTooltip="Editar"
-                  tooltipPosition="top" [ariaLabel]="'Editar ' + p.razonSocial" (onClick)="abrirEditar(p)" />
-                <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" pTooltip="Eliminar"
-                  tooltipPosition="top" [ariaLabel]="'Eliminar ' + p.razonSocial" (onClick)="confirmarEliminacion(p)" />
+                <app-boton-icono accion="editar" [etiqueta]="'Editar ' + p.razonSocial" tooltip="Editar" (clic)="abrirEditar(p)" />
+                <app-boton-icono accion="eliminar" [etiqueta]="'Eliminar ' + p.razonSocial" tooltip="Eliminar" (clic)="confirmarEliminacion(p)" />
               </div>
             </td>
           </tr>
@@ -76,8 +73,8 @@
 
 <p-dialog [(visible)]="formVisible" [header]="editando() ? 'Editar proveedor' : 'Nuevo proveedor'" [modal]="true"
   [draggable]="false" [style]="{ width: '30rem' }" [breakpoints]="{ '640px': '95vw' }">
-  <form [formGroup]="form" (ngSubmit)="guardar()" class="grid grid-cols-2 gap-4 pt-1" novalidate>
-    <div class="col-span-2 flex flex-col gap-1.5">
+  <form [formGroup]="form" (ngSubmit)="guardar()" class="grid grid-cols-1 gap-4 pt-1 sm:grid-cols-2" novalidate>
+    <div class="flex flex-col gap-1.5 sm:col-span-2">
       <label for="razonSocial" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Razón social *</label>
       <input pInputText id="razonSocial" formControlName="razonSocial" autocomplete="off" [invalid]="invalido('razonSocial')" />
       @if (invalido('razonSocial')) {
@@ -100,8 +97,7 @@
     </div>
   </form>
   <ng-template #footer>
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="formVisible.set(false)" />
-    <p-button [label]="editando() ? 'Guardar cambios' : 'Crear proveedor'" icon="pi pi-check" [loading]="guardando()"
-      (onClick)="guardar()" styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-cancelar (clic)="formVisible.set(false)" />
+    <app-boton-principal [texto]="editando() ? 'Guardar cambios' : 'Crear proveedor'" icono="pi pi-check" [cargando]="guardando()" (clic)="guardar()" />
   </ng-template>
 </p-dialog>

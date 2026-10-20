@@ -1,14 +1,13 @@
 <p-toast position="top-right" />
 <p-confirmdialog [style]="{ width: '28rem' }" />
 
-<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+<div class="flex min-h-[calc(100dvh-3.5rem)] w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:min-h-dvh lg:px-8">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
       <h1 class="text-xl font-bold text-gray-900 dark:text-zinc-100">Planes de membresía</h1>
       <p class="text-sm text-gray-500 dark:text-zinc-400">Precio y duración de cada plan que se vende en Membresías.</p>
     </div>
-    <p-button label="Nuevo plan" icon="pi pi-plus" (onClick)="abrirNuevo()"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-principal texto="Nuevo plan" icono="pi pi-plus" (clic)="abrirNuevo()" />
   </div>
 
   @if (error()) {
@@ -48,10 +47,8 @@
             <td class="text-right! tabular-nums text-gray-500 dark:text-zinc-400">{{ porDia(p) | currency: 'PEN' : 'symbol-narrow' }}</td>
             <td>
               <div class="flex justify-end gap-1">
-                <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" severity="secondary" pTooltip="Editar"
-                  tooltipPosition="top" [ariaLabel]="'Editar ' + p.nombre" (onClick)="abrirEditar(p)" />
-                <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" pTooltip="Eliminar"
-                  tooltipPosition="top" [ariaLabel]="'Eliminar ' + p.nombre" (onClick)="confirmarEliminacion(p)" />
+                <app-boton-icono accion="editar" [etiqueta]="'Editar ' + p.nombre" tooltip="Editar" (clic)="abrirEditar(p)" />
+                <app-boton-icono accion="eliminar" [etiqueta]="'Eliminar ' + p.nombre" tooltip="Eliminar" (clic)="confirmarEliminacion(p)" />
               </div>
             </td>
           </tr>
@@ -76,7 +73,7 @@
         <small class="text-red-600 dark:text-red-400">El nombre es obligatorio.</small>
       }
     </div>
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div class="flex flex-col gap-1.5">
         <label for="precio" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Precio *</label>
         <p-inputnumber inputId="precio" formControlName="precio" mode="currency" currency="PEN" locale="es-PE"
@@ -99,8 +96,7 @@
     }
   </form>
   <ng-template #footer>
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="formVisible.set(false)" />
-    <p-button [label]="editando() ? 'Guardar cambios' : 'Crear plan'" icon="pi pi-check" [loading]="guardando()" (onClick)="guardar()"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-cancelar (clic)="formVisible.set(false)" />
+    <app-boton-principal [texto]="editando() ? 'Guardar cambios' : 'Crear plan'" icono="pi pi-check" [cargando]="guardando()" (clic)="guardar()" />
   </ng-template>
 </p-dialog>

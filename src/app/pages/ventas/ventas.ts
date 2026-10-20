@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
@@ -16,9 +15,9 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { TooltipModule } from 'primeng/tooltip';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageModule } from 'primeng/message';
+import { BotonCancelarComponent, BotonIconoComponent, BotonPrincipalComponent, BotonSecundarioComponent } from '../../components/botones';
 import { BuscarClienteComponent } from '../../components/buscar-cliente/buscar-cliente';
 import { AuthService } from '../../services/auth.service';
 import { CajaService } from '../../services/caja.service';
@@ -48,7 +47,6 @@ type Vista = 'turno' | 'fechas';
     DatePipe,
     FormsModule,
     RouterLink,
-    ButtonModule,
     TableModule,
     TagModule,
     DialogModule,
@@ -60,10 +58,13 @@ type Vista = 'turno' | 'fechas';
     ToggleSwitchModule,
     ToastModule,
     ConfirmDialogModule,
-    TooltipModule,
     SkeletonModule,
     MessageModule,
     BuscarClienteComponent,
+    BotonCancelarComponent,
+    BotonIconoComponent,
+    BotonPrincipalComponent,
+    BotonSecundarioComponent,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './ventas.html',

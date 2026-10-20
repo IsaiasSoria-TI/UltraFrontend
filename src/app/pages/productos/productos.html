@@ -1,7 +1,7 @@
 <p-toast position="top-right" />
 <p-confirmdialog [style]="{ width: '28rem' }" />
 
-<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+<div class="flex min-h-[calc(100dvh-3.5rem)] w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:min-h-dvh lg:px-8">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
       <h1 class="text-xl font-bold text-gray-900 dark:text-zinc-100">Productos</h1>
@@ -13,9 +13,8 @@
       }
     </div>
     <div class="flex gap-2">
-      <p-button label="Categorías" icon="pi pi-tags" severity="secondary" [outlined]="true" (onClick)="categoriasVisible.set(true)" />
-      <p-button label="Nuevo producto" icon="pi pi-plus" (onClick)="abrirNuevo()"
-        styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+      <app-boton-secundario texto="Categorías" icono="pi pi-tags" (clic)="categoriasVisible.set(true)" />
+      <app-boton-principal texto="Nuevo producto" icono="pi pi-plus" (clic)="abrirNuevo()" />
     </div>
   </div>
 
@@ -77,10 +76,8 @@
             <td class="text-right! tabular-nums text-gray-500 dark:text-zinc-400">{{ p.stockMinimo }}</td>
             <td>
               <div class="flex justify-end gap-1">
-                <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" severity="secondary" pTooltip="Editar"
-                  tooltipPosition="top" [ariaLabel]="'Editar ' + p.nombre" (onClick)="abrirEditar(p)" />
-                <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" pTooltip="Eliminar"
-                  tooltipPosition="top" [ariaLabel]="'Eliminar ' + p.nombre" (onClick)="confirmarEliminacion(p)" />
+                <app-boton-icono accion="editar" [etiqueta]="'Editar ' + p.nombre" tooltip="Editar" (clic)="abrirEditar(p)" />
+                <app-boton-icono accion="eliminar" [etiqueta]="'Eliminar ' + p.nombre" tooltip="Eliminar" (clic)="confirmarEliminacion(p)" />
               </div>
             </td>
           </tr>
@@ -100,15 +97,15 @@
 <!-- Producto -->
 <p-dialog [(visible)]="formVisible" [header]="editando() ? 'Editar producto' : 'Nuevo producto'" [modal]="true"
   [draggable]="false" [style]="{ width: '32rem' }" [breakpoints]="{ '640px': '95vw' }">
-  <form [formGroup]="form" (ngSubmit)="guardar()" class="grid grid-cols-2 gap-4 pt-1" novalidate>
-    <div class="col-span-2 flex flex-col gap-1.5">
+  <form [formGroup]="form" (ngSubmit)="guardar()" class="grid grid-cols-1 gap-4 pt-1 sm:grid-cols-2" novalidate>
+    <div class="flex flex-col gap-1.5 sm:col-span-2">
       <label for="nombre" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Nombre *</label>
       <input pInputText id="nombre" formControlName="nombre" autocomplete="off" [invalid]="invalido('nombre')" />
       @if (invalido('nombre')) {
         <small class="text-red-600 dark:text-red-400">El nombre es obligatorio.</small>
       }
     </div>
-    <div class="col-span-2 flex flex-col gap-1.5">
+    <div class="flex flex-col gap-1.5 sm:col-span-2">
       <label for="categoria" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Categoría *</label>
       <p-select inputId="categoria" formControlName="idCategoria" [options]="categorias()" optionLabel="nombre"
         optionValue="id" placeholder="Selecciona" appendTo="body" [invalid]="invalido('idCategoria')"
@@ -127,16 +124,15 @@
       <p-inputnumber inputId="stock" formControlName="stock" [min]="0" [useGrouping]="false" [invalid]="invalido('stock')"
         inputStyleClass="w-full" />
     </div>
-    <div class="col-span-2 flex flex-col gap-1.5">
+    <div class="flex flex-col gap-1.5 sm:col-span-2">
       <label for="stockMinimo" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Stock mínimo *</label>
       <p-inputnumber inputId="stockMinimo" formControlName="stockMinimo" [min]="0" [useGrouping]="false"
         [invalid]="invalido('stockMinimo')" inputStyleClass="w-full" />
     </div>
   </form>
   <ng-template #footer>
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="formVisible.set(false)" />
-    <p-button [label]="editando() ? 'Guardar cambios' : 'Crear producto'" icon="pi pi-check" [loading]="guardando()"
-      (onClick)="guardar()" styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-cancelar (clic)="formVisible.set(false)" />
+    <app-boton-principal [texto]="editando() ? 'Guardar cambios' : 'Crear producto'" icono="pi pi-check" [cargando]="guardando()" (clic)="guardar()" />
   </ng-template>
 </p-dialog>
 
@@ -146,7 +142,7 @@
   <form class="mb-3 flex gap-2" (ngSubmit)="agregarCategoria()">
     <input pInputText name="nueva" [(ngModel)]="nuevaCategoria" placeholder="Nueva categoría" maxlength="100"
       aria-label="Nombre de la nueva categoría" class="min-w-0 flex-1" autocomplete="off" />
-    <p-button type="submit" icon="pi pi-plus" label="Agregar" severity="secondary" [outlined]="true" [disabled]="!nuevaCategoria.trim()" />
+    <app-boton-secundario texto="Agregar" icono="pi pi-plus" [deshabilitado]="!nuevaCategoria.trim()" tipo="submit" />
   </form>
   <ul class="divide-y divide-gray-100 rounded-lg border border-gray-200 dark:divide-zinc-800 dark:border-zinc-800">
     @for (c of categorias(); track c.id) {
@@ -154,15 +150,13 @@
         @if (editandoCategoria() === c.id) {
           <input pInputText [(ngModel)]="nombreCategoria" (keydown.enter)="guardarCategoria(c)" maxlength="100"
             [attr.aria-label]="'Nuevo nombre para ' + c.nombre" class="min-w-0 flex-1" pSize="small" />
-          <p-button icon="pi pi-check" [text]="true" [rounded]="true" ariaLabel="Guardar" (onClick)="guardarCategoria(c)" />
-          <p-button icon="pi pi-times" [text]="true" [rounded]="true" severity="secondary" ariaLabel="Cancelar" (onClick)="editandoCategoria.set(null)" />
+          <app-boton-icono accion="confirmar" etiqueta="Guardar" (clic)="guardarCategoria(c)" />
+          <app-boton-icono accion="quitar" etiqueta="Cancelar" (clic)="editandoCategoria.set(null)" />
         } @else {
           <span class="flex-1 text-sm text-gray-900 dark:text-zinc-100">{{ c.nombre }}</span>
           <span class="text-xs tabular-nums text-gray-500 dark:text-zinc-400">{{ c.productos }} prod.</span>
-          <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" severity="secondary" [ariaLabel]="'Renombrar ' + c.nombre"
-            (onClick)="editarCategoria(c)" />
-          <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" [ariaLabel]="'Eliminar ' + c.nombre"
-            [disabled]="c.productos > 0" [pTooltip]="c.productos > 0 ? 'Tiene productos' : ''" (onClick)="eliminarCategoria(c)" />
+          <app-boton-icono accion="editar" [etiqueta]="'Renombrar ' + c.nombre" (clic)="editarCategoria(c)" />
+          <app-boton-icono accion="eliminar" [etiqueta]="'Eliminar ' + c.nombre" [tooltip]="c.productos > 0 ? 'Tiene productos' : ''" [deshabilitado]="c.productos > 0" (clic)="eliminarCategoria(c)" />
         }
       </li>
     } @empty {

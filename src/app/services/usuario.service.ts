@@ -2,12 +2,13 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Rol, Usuario, UsuarioRequest } from '../models/admin.model';
+import { environment } from '../../environments/environment';
 
 // Personal del gimnasio (los usuarios de clientes se gestionan en Clientes)
 @Injectable({ providedIn: 'root' })
 export class UsuarioService {
 	private readonly http = inject(HttpClient);
-	private readonly apiUrl = 'http://localhost:8080';
+	private readonly apiUrl = environment.apiUrl;
 
 	listar(): Observable<Usuario[]> {
 		return this.http.get<Usuario[]>(`${this.apiUrl}/usuarios`);

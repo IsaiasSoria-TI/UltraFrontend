@@ -3,7 +3,6 @@ import { CurrencyPipe } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
@@ -14,9 +13,9 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { TooltipModule } from 'primeng/tooltip';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageModule } from 'primeng/message';
+import { BotonCancelarComponent, BotonIconoComponent, BotonPrincipalComponent, BotonSecundarioComponent } from '../../components/botones';
 import { ProductoService } from '../../services/producto.service';
 import { Producto } from '../../models/venta.model';
 import { Categoria, ProductoRequest } from '../../models/admin.model';
@@ -33,7 +32,6 @@ const STOCK_MINIMO_INICIAL = 5;
     CurrencyPipe,
     FormsModule,
     ReactiveFormsModule,
-    ButtonModule,
     TableModule,
     TagModule,
     DialogModule,
@@ -44,9 +42,12 @@ const STOCK_MINIMO_INICIAL = 5;
     InputIconModule,
     ToastModule,
     ConfirmDialogModule,
-    TooltipModule,
     SkeletonModule,
     MessageModule,
+    BotonCancelarComponent,
+    BotonIconoComponent,
+    BotonPrincipalComponent,
+    BotonSecundarioComponent,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './productos.html',

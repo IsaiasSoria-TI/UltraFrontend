@@ -2,11 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Caja, MetodoPago } from '../models/caja.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class CajaService {
 	private readonly http = inject(HttpClient);
-	private readonly apiUrl = 'http://localhost:8080';
+	private readonly apiUrl = environment.apiUrl;
 
 	// null cuando no hay caja abierta (el backend responde 204)
 	actual(): Observable<Caja | null> {

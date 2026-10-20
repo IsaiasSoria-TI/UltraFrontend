@@ -1,4 +1,4 @@
-<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+<div class="flex min-h-[calc(100dvh-3.5rem)] w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:min-h-dvh lg:px-8">
   <div>
     <h1 class="text-xl font-bold text-gray-900 dark:text-zinc-100">Reportes</h1>
     <p class="text-sm text-gray-500 dark:text-zinc-400">Ingresos por ventas y membresías, compras y lo más vendido del periodo.</p>
@@ -14,10 +14,10 @@
       <label for="hasta" class="text-xs font-medium text-gray-600 dark:text-zinc-400">Hasta</label>
       <input pInputText id="hasta" name="hasta" type="date" [(ngModel)]="hasta" [min]="desde" [max]="hoy" />
     </div>
-    <p-button type="submit" label="Generar" icon="pi pi-chart-bar" severity="secondary" [outlined]="true" />
+    <app-boton-secundario texto="Generar" icono="pi pi-chart-bar" tipo="submit" />
     <div class="flex gap-1">
       @for (r of rapidos; track r.dias) {
-        <p-button [label]="r.label" size="small" [text]="true" severity="secondary" (onClick)="rango(r.dias)" />
+        <app-boton-texto [texto]="r.label" (clic)="rango(r.dias)" />
       }
     </div>
   </form>

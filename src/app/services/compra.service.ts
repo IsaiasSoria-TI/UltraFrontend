@@ -2,11 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { Compra, CompraRequest, Impuesto, Proveedor } from '../models/compra.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class CompraService {
 	private readonly http = inject(HttpClient);
-	private readonly apiUrl = 'http://localhost:8080';
+	private readonly apiUrl = environment.apiUrl;
 
 	listar(): Observable<Compra[]> {
 		return this.http.get<Compra[]>(`${this.apiUrl}/compras`);

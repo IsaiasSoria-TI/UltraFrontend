@@ -1,7 +1,13 @@
-<!-- Colapsado: solo iconos (4.5rem). Al pasar el cursor (o navegar con teclado) se expande sobre el contenido. -->
+<!--
+  Escritorio (lg): colapsado, solo iconos (4.5rem); al pasar el cursor (o navegar con teclado) se expande sobre el contenido.
+  Móvil y tablet: panel de 16rem que entra desde la izquierda con el botón de menú del layout.
+-->
 <nav
+  id="menu-principal"
   aria-label="Menú principal"
-  class="group fixed left-0 top-0 z-50 flex h-screen w-18 flex-col overflow-hidden bg-red-900 text-red-100 dark:bg-red-950 shadow-lg transition-[width] duration-300 ease-in-out hover:w-64 focus-within:w-64"
+  [class.-translate-x-full]="!abierto()"
+  [attr.inert]="movil() && !abierto() ? '' : null"
+  class="group fixed left-0 top-0 z-50 flex h-dvh w-64 flex-col overflow-hidden bg-red-900 text-red-100 dark:bg-red-950 shadow-lg transition-[width,translate] duration-300 ease-in-out lg:w-18 lg:translate-x-0 lg:hover:w-64 lg:focus-within:w-64"
 >
   <!-- Marca -->
   <div class="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-5">
@@ -9,10 +15,18 @@
       <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#F5A623" />
     </svg>
     <span
-      class="whitespace-nowrap text-lg font-black uppercase tracking-tight text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100"
+      class="flex-1 whitespace-nowrap text-lg font-black uppercase tracking-tight text-white lg:opacity-0 transition-opacity duration-200 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100"
     >
       Ultratech
     </span>
+    <button
+      type="button"
+      (click)="cerrar.emit()"
+      aria-label="Cerrar menú"
+      class="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-red-100/90 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-white/60 lg:hidden"
+    >
+      <i class="pi pi-times"></i>
+    </button>
   </div>
 
   <!-- Navegación -->
@@ -20,9 +34,9 @@
     @for (section of sections; track section.titulo) {
       <div class="mb-2">
         <div class="relative flex h-7 items-center px-6">
-          <span class="absolute inset-x-5 top-1/2 h-px bg-white/10 transition-opacity duration-200 group-hover:opacity-0 group-focus-within:opacity-0"></span>
+          <span class="absolute inset-x-5 top-1/2 h-px bg-white/10 transition-opacity duration-200 max-lg:hidden lg:group-hover:opacity-0 lg:group-focus-within:opacity-0"></span>
           <span
-            class="whitespace-nowrap text-[0.68rem] font-semibold uppercase tracking-widest text-red-300/70 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100"
+            class="whitespace-nowrap text-[0.68rem] font-semibold uppercase tracking-widest text-red-300/70 lg:opacity-0 transition-opacity duration-200 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100"
           >
             {{ section.titulo }}
           </span>
@@ -36,10 +50,11 @@
                   [routerLink]="item.route"
                   routerLinkActive="bg-white/15! text-white! before:opacity-100!"
                   [attr.title]="item.label"
+                  (click)="cerrar.emit()"
                   class="relative flex h-11 items-center gap-4 rounded-lg px-3.5 text-red-100/90 no-underline transition-colors duration-150 before:absolute before:-left-3 before:top-2 before:h-7 before:w-1 before:rounded-r before:bg-white before:opacity-0 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-white/60"
                 >
                   <i [class]="item.icon + ' w-5 shrink-0 text-center text-lg!'"></i>
-                  <span class="whitespace-nowrap text-sm font-medium opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+                  <span class="whitespace-nowrap text-sm font-medium lg:opacity-0 transition-opacity duration-200 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
                     {{ item.label }}
                   </span>
                 </a>
@@ -50,7 +65,7 @@
                   class="flex h-11 cursor-not-allowed items-center gap-4 rounded-lg px-3.5 text-red-100/45"
                 >
                   <i [class]="item.icon + ' w-5 shrink-0 text-center text-lg!'"></i>
-                  <span class="flex flex-1 items-center justify-between gap-2 whitespace-nowrap text-sm opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+                  <span class="flex flex-1 items-center justify-between gap-2 whitespace-nowrap text-sm lg:opacity-0 transition-opacity duration-200 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
                     {{ item.label }}
                     <p-tag value="Pronto" [rounded]="true" class="bg-white/10! text-red-200! text-[0.6rem]! font-medium! px-2! py-0!" />
                   </span>
@@ -71,7 +86,7 @@
         shape="circle"
         class="shrink-0 bg-white! text-red-900! font-bold!"
       />
-      <div class="min-w-0 flex-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+      <div class="min-w-0 flex-1 lg:opacity-0 transition-opacity duration-200 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
         <p class="truncate text-sm font-semibold text-white">{{ username }}</p>
         <p class="truncate text-xs text-red-200/70">{{ rol }}</p>
       </div>
@@ -81,7 +96,7 @@
         [attr.aria-label]="themeService.dark() ? 'Activar modo claro' : 'Activar modo oscuro'"
         [attr.title]="themeService.dark() ? 'Modo claro' : 'Modo oscuro'"
         [attr.aria-pressed]="themeService.dark()"
-        class="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-red-100/90 opacity-0 transition-[opacity,background-color] duration-200 hover:bg-white/10 hover:text-white focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-white/60 group-hover:opacity-100 group-focus-within:opacity-100"
+        class="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-red-100/90 lg:opacity-0 transition-[opacity,background-color] duration-200 hover:bg-white/10 hover:text-white lg:focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-white/60 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100"
       >
         <i [class]="themeService.dark() ? 'pi pi-sun' : 'pi pi-moon'"></i>
       </button>
@@ -93,7 +108,7 @@
       class="mt-1 flex h-11 w-full cursor-pointer items-center gap-4 rounded-lg px-3.5 text-red-100/90 transition-colors duration-150 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-white/60"
     >
       <i class="pi pi-sign-out w-5 shrink-0 text-center text-lg!"></i>
-      <span class="whitespace-nowrap text-sm font-medium opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+      <span class="whitespace-nowrap text-sm font-medium lg:opacity-0 transition-opacity duration-200 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
         Cerrar sesión
       </span>
     </button>

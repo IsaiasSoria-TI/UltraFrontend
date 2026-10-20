@@ -1,14 +1,13 @@
 <p-toast position="top-right" />
 
-<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+<div class="flex min-h-[calc(100dvh-3.5rem)] w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:min-h-dvh lg:px-8">
   <!-- Encabezado -->
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
       <h1 class="text-xl font-bold text-gray-900 dark:text-zinc-100">Caja</h1>
       <p class="text-sm text-gray-500 dark:text-zinc-400">Apertura, resumen del turno y cierre con arqueo.</p>
     </div>
-    <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" severity="secondary" ariaLabel="Actualizar"
-      pTooltip="Actualizar" (onClick)="cargar()" [disabled]="loading()" />
+    <app-boton-icono accion="actualizar" etiqueta="Actualizar" tooltip="Actualizar" [deshabilitado]="loading()" (clic)="cargar()" />
   </div>
 
   @if (error()) {
@@ -45,8 +44,7 @@
               </p>
             </div>
           </div>
-          <p-button label="Cerrar caja" icon="pi pi-lock" (onClick)="abrirCierre()"
-            styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+          <app-boton-principal texto="Cerrar caja" icono="pi pi-lock" (clic)="abrirCierre()" />
         </div>
 
         @if (c.resumen; as r) {
@@ -121,8 +119,7 @@
             <p-inputnumber inputId="montoInicial" name="montoInicial" [(ngModel)]="montoInicial" mode="currency"
               currency="PEN" locale="es-PE" [min]="0" [minFractionDigits]="2" [invalid]="montoInicialInvalido()"
               placeholder="S/ 0.00" class="min-w-0 flex-1" />
-            <p-button type="submit" label="Abrir caja" icon="pi pi-lock-open" [loading]="abriendo()"
-              styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+            <app-boton-principal texto="Abrir caja" icono="pi pi-lock-open" [cargando]="abriendo()" tipo="submit" />
           </div>
           @if (montoInicialInvalido()) {
             <small class="text-red-600 dark:text-red-400">Ingresa un monto mayor o igual a 0.</small>
@@ -199,10 +196,8 @@
   }
 
   <ng-template #footer>
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="cierreVisible.set(false)" />
-    <p-button label="Confirmar cierre" icon="pi pi-check" [loading]="cerrando()" [disabled]="montoFinal() === null"
-      (onClick)="confirmarCierre()"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-cancelar (clic)="cierreVisible.set(false)" />
+    <app-boton-principal texto="Confirmar cierre" icono="pi pi-check" [cargando]="cerrando()" [deshabilitado]="montoFinal() === null" (clic)="confirmarCierre()" />
   </ng-template>
 </p-dialog>
 
@@ -231,7 +226,6 @@
     </dl>
   }
   <ng-template #footer>
-    <p-button label="Aceptar" (onClick)="reporte.set(null)"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-principal texto="Aceptar" (clic)="reporte.set(null)" />
   </ng-template>
 </p-dialog>

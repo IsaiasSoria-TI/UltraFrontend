@@ -3,11 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Impuesto } from '../models/compra.model';
 import { ImpuestoRequest } from '../models/admin.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ImpuestoService {
 	private readonly http = inject(HttpClient);
-	private readonly apiUrl = 'http://localhost:8080/impuestos';
+	private readonly apiUrl = `${environment.apiUrl}/impuestos`;
 
 	// Incluye los inactivos
 	listar(): Observable<Impuesto[]> {

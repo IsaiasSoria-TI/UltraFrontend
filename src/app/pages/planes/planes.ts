@@ -3,16 +3,15 @@ import { CurrencyPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { TooltipModule } from 'primeng/tooltip';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageModule } from 'primeng/message';
+import { BotonCancelarComponent, BotonIconoComponent, BotonPrincipalComponent } from '../../components/botones';
 import { MembresiaService } from '../../services/membresia.service';
 import { Plan } from '../../models/membresia.model';
 import { mensajeError } from '../../utils/http-error';
@@ -24,16 +23,17 @@ import { mensajeError } from '../../utils/http-error';
   imports: [
     CurrencyPipe,
     ReactiveFormsModule,
-    ButtonModule,
     TableModule,
     DialogModule,
     InputTextModule,
     InputNumberModule,
     ToastModule,
     ConfirmDialogModule,
-    TooltipModule,
     SkeletonModule,
     MessageModule,
+    BotonCancelarComponent,
+    BotonIconoComponent,
+    BotonPrincipalComponent,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './planes.html',

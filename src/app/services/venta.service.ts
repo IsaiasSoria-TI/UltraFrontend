@@ -2,11 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Producto, Venta, VentaRequest } from '../models/venta.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class VentaService {
 	private readonly http = inject(HttpClient);
-	private readonly apiUrl = 'http://localhost:8080';
+	private readonly apiUrl = environment.apiUrl;
 
 	// Fechas yyyy-MM-dd
 	listar(desde: string, hasta: string): Observable<Venta[]> {

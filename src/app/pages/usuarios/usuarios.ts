@@ -2,7 +2,6 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
@@ -13,9 +12,9 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { ToastModule } from 'primeng/toast';
-import { TooltipModule } from 'primeng/tooltip';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageModule } from 'primeng/message';
+import { BotonCancelarComponent, BotonIconoComponent, BotonPrincipalComponent } from '../../components/botones';
 import { AuthService } from '../../services/auth.service';
 import { UsuarioService } from '../../services/usuario.service';
 import { Rol, Usuario, UsuarioRequest } from '../../models/admin.model';
@@ -31,7 +30,6 @@ import { mensajeError } from '../../utils/http-error';
   imports: [
     FormsModule,
     ReactiveFormsModule,
-    ButtonModule,
     TableModule,
     TagModule,
     DialogModule,
@@ -42,9 +40,11 @@ import { mensajeError } from '../../utils/http-error';
     IconFieldModule,
     InputIconModule,
     ToastModule,
-    TooltipModule,
     SkeletonModule,
     MessageModule,
+    BotonCancelarComponent,
+    BotonIconoComponent,
+    BotonPrincipalComponent,
   ],
   providers: [MessageService],
   templateUrl: './usuarios.html',

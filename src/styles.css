@@ -5,3 +5,28 @@
 
 /* dark: se activa con la clase .dark (la misma que usa PrimeNG), no con la preferencia del sistema */
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* Rojo de marca: el mismo del sidebar (bg-red-900) */
+:root {
+  --color-marca: var(--color-red-900);
+  --color-marca-hover: color-mix(in oklch, var(--color-marca), black 20%);
+}
+
+/* Responsive: las tablas anchas se desplazan dentro de su tarjeta, no mueven toda la página */
+.p-datatable-table-container {
+  overflow-x: auto;
+}
+
+/* Diálogos, paneles y avisos con ancho fijo nunca exceden la pantalla del móvil */
+.p-dialog {
+  max-width: calc(100vw - 2rem);
+}
+
+.p-drawer-left,
+.p-drawer-right {
+  max-width: 100vw;
+}
+
+.p-toast {
+  max-width: calc(100vw - 2rem);
+}

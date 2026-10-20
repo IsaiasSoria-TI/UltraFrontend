@@ -1,13 +1,52 @@
-.login-card {
-    border: 1px solid #3f3f3f;
-    border-radius: 0.5rem;
-    background-color: #1f1f1f;
-    padding: 2rem 1.75rem;
+.login-page {
+  background-color: #111111;
 }
 
-:host ::ng-deep .p-floatlabel,
-:host ::ng-deep .p-iconfield,
-:host ::ng-deep .p-iconfield input,
-:host ::ng-deep .p-button {
-    width: 100%;
+/* Tokens de PrimeNG redefinidos solo dentro del login */
+.login {
+  --p-inputtext-background: #1e1e1e;
+  --p-inputtext-border-color: #2e2e2e;
+  --p-inputtext-hover-border-color: #3a3a3a;
+  --p-inputtext-focus-border-color: var(--color-marca);
+  --p-inputtext-color: #ffffff;
+  --p-inputtext-border-radius: 6px;
+  --p-iconfield-icon-color: #a3a3a3;
+
+  --p-button-border-radius: 6px;
+  --p-button-primary-background: var(--color-marca);
+  --p-button-primary-border-color: var(--color-marca);
+  --p-button-primary-hover-background: var(--color-marca-hover);
+  --p-button-primary-hover-border-color: var(--color-marca-hover);
+  --p-button-primary-active-background: var(--color-marca-hover);
+  --p-button-primary-active-border-color: var(--color-marca-hover);
+  --p-button-primary-color: #ffffff;
+  --p-button-primary-hover-color: #ffffff;
+  --p-button-primary-active-color: #ffffff;
+  --p-button-primary-focus-ring-color: var(--color-marca);
+}
+
+.login-label {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.login-link {
+  color: var(--color-marca);
+  text-decoration: none;
+  transition: color 150ms;
+}
+
+.login-link:hover {
+  color: var(--color-marca-hover);
+  text-decoration: underline;
+}
+
+.login ::ng-deep .p-inputtext {
+  height: 40px;
+}
+
+.login ::ng-deep .p-button {
+  height: 44px;
+  font-weight: 600;
 }

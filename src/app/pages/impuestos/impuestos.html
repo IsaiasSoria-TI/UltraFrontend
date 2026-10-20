@@ -1,13 +1,12 @@
 <p-toast position="top-right" />
 
-<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+<div class="flex min-h-[calc(100dvh-3.5rem)] w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:min-h-dvh lg:px-8">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
       <h1 class="text-xl font-bold text-gray-900 dark:text-zinc-100">Impuestos</h1>
       <p class="text-sm text-gray-500 dark:text-zinc-400">Se aplican a cada línea de las compras. Los inactivos no aparecen al registrar compras.</p>
     </div>
-    <p-button label="Nuevo impuesto" icon="pi pi-plus" (onClick)="abrirNuevo()"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-principal texto="Nuevo impuesto" icono="pi pi-plus" (clic)="abrirNuevo()" />
   </div>
 
   @if (error()) {
@@ -48,8 +47,7 @@
                 <p-toggleswitch [ngModel]="i.estado" (ngModelChange)="cambiarEstado(i, $event)"
                   [ariaLabel]="(i.estado ? 'Desactivar ' : 'Activar ') + i.nombre"
                   [pTooltip]="i.estado ? 'Desactivar' : 'Activar'" tooltipPosition="top" />
-                <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" severity="secondary" pTooltip="Editar"
-                  tooltipPosition="top" [ariaLabel]="'Editar ' + i.nombre" (onClick)="abrirEditar(i)" />
+                <app-boton-icono accion="editar" [etiqueta]="'Editar ' + i.nombre" tooltip="Editar" (clic)="abrirEditar(i)" />
               </div>
             </td>
           </tr>
@@ -84,8 +82,7 @@
     }
   </form>
   <ng-template #footer>
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="formVisible.set(false)" />
-    <p-button [label]="editando() ? 'Guardar cambios' : 'Crear impuesto'" icon="pi pi-check" [loading]="guardando()"
-      (onClick)="guardar()" styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-cancelar (clic)="formVisible.set(false)" />
+    <app-boton-principal [texto]="editando() ? 'Guardar cambios' : 'Crear impuesto'" icono="pi pi-check" [cargando]="guardando()" (clic)="guardar()" />
   </ng-template>
 </p-dialog>

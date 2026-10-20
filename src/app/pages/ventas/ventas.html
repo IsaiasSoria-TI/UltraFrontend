@@ -1,7 +1,7 @@
 <p-toast position="top-right" />
 <p-confirmdialog [style]="{ width: '28rem' }" />
 
-<div class="flex min-h-screen w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+<div class="flex min-h-[calc(100dvh-3.5rem)] w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:min-h-dvh lg:px-8">
   <!-- Encabezado -->
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
@@ -14,8 +14,7 @@
         </p>
       }
     </div>
-    <p-button label="Nueva venta" icon="pi pi-shopping-cart" (onClick)="abrirVenta()"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-principal texto="Nueva venta" icono="pi pi-shopping-cart" (clic)="abrirVenta()" />
   </div>
 
   <!-- Turno actual o consulta por fechas -->
@@ -32,7 +31,7 @@
           <label for="hasta" class="text-xs font-medium text-gray-600 dark:text-zinc-400">Hasta</label>
           <input pInputText id="hasta" name="hasta" type="date" [(ngModel)]="hasta" [min]="desde" />
         </div>
-        <p-button type="submit" label="Filtrar" icon="pi pi-filter" severity="secondary" [outlined]="true" />
+        <app-boton-secundario texto="Filtrar" icono="pi pi-filter" tipo="submit" />
       </form>
     }
   </div>
@@ -79,11 +78,9 @@
             <td><p-tag [severity]="severidad(v.estado)" [value]="etiqueta(v.estado)" /></td>
             <td>
               <div class="flex justify-end gap-1">
-                <p-button icon="pi pi-eye" [text]="true" [rounded]="true" severity="secondary" pTooltip="Ver detalle"
-                  tooltipPosition="top" [ariaLabel]="'Ver detalle de la venta ' + v.id" (onClick)="verDetalle(v)" />
+                <app-boton-icono accion="ver" [etiqueta]="'Ver detalle de la venta ' + v.id" tooltip="Ver detalle" (clic)="verDetalle(v)" />
                 @if (esAdministrador && v.estado === 'activa' && !v.cajaCerrada) {
-                  <p-button icon="pi pi-ban" [text]="true" [rounded]="true" severity="danger" pTooltip="Anular venta"
-                    tooltipPosition="top" [ariaLabel]="'Anular la venta ' + v.id" (onClick)="confirmarAnulacion(v)" />
+                  <app-boton-icono accion="anular" [etiqueta]="'Anular la venta ' + v.id" tooltip="Anular venta" (clic)="confirmarAnulacion(v)" />
                 }
               </div>
             </td>
@@ -150,8 +147,7 @@
           <p-inputnumber name="cantidad" [(ngModel)]="cantidad" [min]="1" [showButtons]="true" buttonLayout="horizontal"
             inputStyleClass="w-14 text-center" ariaLabel="Cantidad" incrementButtonIcon="pi pi-plus"
             decrementButtonIcon="pi pi-minus" />
-          <p-button type="submit" label="Agregar" icon="pi pi-plus" severity="secondary" [outlined]="true"
-            [disabled]="productoSeleccionado === null" />
+          <app-boton-secundario texto="Agregar" icono="pi pi-plus" [deshabilitado]="productoSeleccionado === null" tipo="submit" />
         </form>
         @if (avisoStock()) {
           <p-message severity="warn" class="mt-2 block">{{ avisoStock() }}</p-message>
@@ -168,8 +164,7 @@
                 <p-inputnumber [ngModel]="i.cantidad" (ngModelChange)="cambiarCantidad(i, $event)" [min]="1" [max]="i.producto.stock"
                   inputStyleClass="w-16 text-center" [ariaLabel]="'Cantidad de ' + i.producto.nombre" />
                 <span class="w-24 text-right font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ i.producto.precio * i.cantidad | currency: 'PEN' : 'symbol-narrow' }}</span>
-                <p-button icon="pi pi-times" [text]="true" [rounded]="true" severity="secondary"
-                  [ariaLabel]="'Quitar ' + i.producto.nombre" (onClick)="quitar(i)" />
+                <app-boton-icono accion="quitar" [etiqueta]="'Quitar ' + i.producto.nombre" (clic)="quitar(i)" />
               </li>
             }
           </ul>
@@ -199,11 +194,9 @@
   }
 
   <ng-template #footer>
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="ventaVisible.set(false)" />
+    <app-boton-cancelar (clic)="ventaVisible.set(false)" />
     @if (hayCaja()) {
-      <p-button label="Cobrar y confirmar" icon="pi pi-check" [loading]="vendiendo()"
-        [disabled]="!carrito().length || metodoSeleccionado === null" (onClick)="confirmarVenta()"
-        styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+      <app-boton-principal texto="Cobrar y confirmar" icono="pi pi-check" [cargando]="vendiendo()" [deshabilitado]="!carrito().length || metodoSeleccionado === null" (clic)="confirmarVenta()" />
     }
   </ng-template>
 </p-dialog>
@@ -247,7 +240,7 @@
             <i class="pi pi-lock mr-1 text-xs!"></i>Su caja ya se cerró: no se puede anular.
           </p>
         } @else {
-          <p-button label="Anular venta" icon="pi pi-ban" severity="danger" [outlined]="true" (onClick)="confirmarAnulacion(v)" />
+          <app-boton-secundario texto="Anular venta" icono="pi pi-ban" (clic)="confirmarAnulacion(v)" [peligro]="true" />
         }
       }
     </div>
@@ -277,7 +270,6 @@
     </div>
   }
   <ng-template #footer>
-    <p-button label="Aceptar" (onClick)="comprobante.set(null)"
-      styleClass="bg-red-800! border-red-800! hover:bg-red-900! hover:border-red-900! text-white! disabled:opacity-50!" />
+    <app-boton-principal texto="Aceptar" (clic)="comprobante.set(null)" />
   </ng-template>
 </p-dialog>
