@@ -18,9 +18,23 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageModule } from 'primeng/message';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BotonCancelarComponent, BotonIconoComponent, BotonPrincipalComponent } from '../../components/botones';
+import { EnlaceAccesoComponent } from '../../components/enlace-acceso/enlace-acceso';
+import { AuthService } from '../../services/auth.service';
 import { ClienteService } from '../../services/cliente.service';
 import { Cliente, ClienteDetalle, ClienteRequest, Entrenador, MembresiaCliente } from '../../models/cliente.model';
+import { AccesoCliente, EstadoAcceso, TipoDocumento } from '../../models/acceso.model';
+import {
+  ESTADOS_ACCESO,
+  TIPOS_DOCUMENTO,
+  abreviaturaDocumento,
+  documentoSegunTipo,
+  maxLongitudDocumento,
+  mensajeDocumento,
+  nombreDocumento,
+} from '../../utils/documento';
+import { autocompletarDni } from '../../utils/autocompletar-dni';
 
 type FiltroMembresia = 'todos' | 'con' | 'sin';
 
@@ -48,6 +62,7 @@ type FiltroMembresia = 'todos' | 'con' | 'sin';
     BotonCancelarComponent,
     BotonIconoComponent,
     BotonPrincipalComponent,
+    EnlaceAccesoComponent,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './clientes.html',
@@ -57,6 +72,10 @@ export class ClientesComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+
+  // Registrar clientes y restablecer accesos: recepción y administración
+  readonly puedeGestionarAccesos = this.authService.puedeGestionarAccesos();
 
   readonly clientes = signal<Cliente[]>([]);
   readonly loading = signal(true);
@@ -78,7 +97,7 @@ export class ClientesComponent implements OnInit {
       if (filtro === 'con' && !c.membresia) return false;
       if (filtro === 'sin' && c.membresia) return false;
       if (!texto) return true;
-      return this.normalizar(`${this.nombreCompleto(c)} ${c.dni} ${c.correo} ${c.celular ?? ''}`).includes(texto);
+      return this.normalizar(`${this.nombreCompleto(c)} ${c.dni} ${c.correo ?? ''} ${c.celular ?? ''}`).includes(texto);
     });
   });
 
@@ -92,11 +111,29 @@ export class ClientesComponent implements OnInit {
     nombre: ['', [Validators.required, Validators.maxLength(100)]],
     apellidoPaterno: ['', [Validators.required, Validators.maxLength(100)]],
     apellidoMaterno: ['', Validators.maxLength(100)],
-    dni: ['', [Validators.required, Validators.pattern(/^\d{8}$/)]],
-    correo: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
+    tipoDocumento: ['DNI' as TipoDocumento, Validators.required],
+    numeroDocumento: ['', [Validators.required, documentoSegunTipo()]],
+    correo: ['', [Validators.email, Validators.maxLength(150)]],
     celular: ['', Validators.pattern(/^9\d{8}$/)],
     observaciones: ['', Validators.maxLength(255)],
   });
+  readonly tiposDocumento = TIPOS_DOCUMENTO;
+  readonly tipoSeleccionado = signal<TipoDocumento>('DNI');
+  // Solo al registrar: al editar no se consulta el padrón
+  readonly dni = autocompletarDni(this.form, () => this.formVisible() && !this.editando());
+
+  // Modal con el enlace de activación / restablecimiento
+  readonly accesoVisible = signal(false);
+  readonly acceso = signal<AccesoCliente | null>(null);
+  readonly tituloAcceso = signal('Cliente registrado');
+  readonly restableciendo = signal<number | null>(null);
+
+  constructor() {
+    this.form.controls.tipoDocumento.valueChanges.pipe(takeUntilDestroyed()).subscribe((tipo) => {
+      this.tipoSeleccionado.set(tipo);
+      this.form.controls.numeroDocumento.updateValueAndValidity();
+    });
+  }
 
   // Detalle
   readonly detalleVisible = signal(false);
@@ -131,6 +168,8 @@ export class ClientesComponent implements OnInit {
   abrirNuevo(): void {
     this.editando.set(null);
     this.form.reset();
+    // Al registrar el celular es obligatorio: ahí se envía el enlace de activación
+    this.celularObligatorio(true);
     this.formVisible.set(true);
   }
 
@@ -140,12 +179,20 @@ export class ClientesComponent implements OnInit {
       nombre: cliente.nombre,
       apellidoPaterno: cliente.apellidoPaterno ?? '',
       apellidoMaterno: cliente.apellidoMaterno ?? '',
-      dni: cliente.dni,
-      correo: cliente.correo,
+      tipoDocumento: cliente.tipoDocumento,
+      numeroDocumento: cliente.dni,
+      correo: cliente.correo ?? '',
       celular: cliente.celular ?? '',
       observaciones: cliente.observaciones ?? '',
     });
+    this.celularObligatorio(false);
     this.formVisible.set(true);
+  }
+
+  private celularObligatorio(obligatorio: boolean): void {
+    const celular = this.form.controls.celular;
+    celular.setValidators(obligatorio ? [Validators.required, Validators.pattern(/^9\d{8}$/)] : Validators.pattern(/^9\d{8}$/));
+    celular.updateValueAndValidity();
   }
 
   async guardar(): Promise<void> {
@@ -159,8 +206,9 @@ export class ClientesComponent implements OnInit {
       nombre: v.nombre.trim(),
       apellidoPaterno: v.apellidoPaterno.trim(),
       apellidoMaterno: v.apellidoMaterno.trim() || null,
-      dni: v.dni.trim(),
-      correo: v.correo.trim(),
+      tipoDocumento: v.tipoDocumento,
+      numeroDocumento: v.numeroDocumento.trim().toUpperCase(),
+      correo: v.correo.trim() || null,
       celular: v.celular.trim() || null,
       observaciones: v.observaciones.trim() || null,
     };
@@ -176,7 +224,11 @@ export class ClientesComponent implements OnInit {
       } else {
         const r = await firstValueFrom(this.clienteService.registrar(datos));
         this.clientes.update((lista) => [r.cliente, ...lista]);
-        this.toast(r.usuarioCreado && !r.correoEnviado ? 'warn' : 'success', 'Cliente registrado', r.mensaje, 7000);
+        if (r.acceso) {
+          this.mostrarAcceso(r.acceso, 'Cliente registrado');
+        } else {
+          this.toast('success', 'Cliente registrado', r.mensaje, 7000);
+        }
       }
       this.formVisible.set(false);
     } catch (e) {
@@ -193,7 +245,13 @@ export class ClientesComponent implements OnInit {
 
   // ---------- Detalle ----------
 
-  async verDetalle(cliente: Cliente): Promise<void> {
+  // Desde el aviso "Este DNI ya está registrado" del formulario
+  verClienteExistente(id: number): void {
+    this.formVisible.set(false);
+    this.verDetalle({ id });
+  }
+
+  async verDetalle(cliente: Pick<Cliente, 'id'>): Promise<void> {
     this.detalle.set(null);
     this.detalleVisible.set(true);
     this.cargandoDetalle.set(true);
@@ -207,27 +265,43 @@ export class ClientesComponent implements OnInit {
     }
   }
 
-  // ---------- Reenviar contraseña ----------
+  // ---------- Restablecer acceso (enlace por WhatsApp) ----------
 
-  confirmarReenvio(cliente: Cliente): void {
+  confirmarRestablecer(cliente: Cliente): void {
+    const pendiente = cliente.estadoAcceso !== 'ACTIVO';
     this.confirmationService.confirm({
-      header: 'Reenviar contraseña temporal',
-      message: `Se generará una nueva contraseña temporal y se enviará a ${cliente.correo}. La anterior dejará de funcionar.`,
-      icon: 'pi pi-envelope',
-      acceptLabel: 'Reenviar',
+      header: 'Restablecer acceso',
+      message: pendiente
+        ? `Se generará un nuevo enlace de activación para ${this.nombreCompleto(cliente)}. Los enlaces anteriores dejarán de funcionar.`
+        : `Se generará un enlace para que ${this.nombreCompleto(cliente)} cree una nueva contraseña. Los enlaces anteriores dejarán de funcionar y su cuenta se desbloqueará.`,
+      icon: 'pi pi-key',
+      acceptLabel: 'Generar enlace',
       rejectLabel: 'Cancelar',
       rejectButtonProps: { severity: 'secondary', outlined: true },
-      accept: () => this.reenviar(cliente),
+      accept: () => this.restablecer(cliente),
     });
   }
 
-  private async reenviar(cliente: Cliente): Promise<void> {
+  private async restablecer(cliente: Cliente): Promise<void> {
+    this.restableciendo.set(cliente.id);
     try {
-      await firstValueFrom(this.clienteService.reenviarClave(cliente.id));
-      this.toast('success', 'Contraseña enviada', `Se envió una nueva contraseña temporal a ${cliente.correo}.`);
+      const acceso = await firstValueFrom(this.clienteService.restablecerAcceso(cliente.id));
+      // Si no tenía usuario, ahora queda pendiente de activación
+      if (!cliente.tieneUsuario) {
+        this.reemplazar({ ...cliente, tieneUsuario: true, estadoAcceso: 'PENDIENTE_ACTIVACION' });
+      }
+      this.mostrarAcceso(acceso, acceso.tipo === 'ACTIVACION' ? 'Enlace de activación' : 'Restablecer contraseña');
     } catch (e) {
-      this.toast('error', 'No se pudo reenviar', this.mensajeError(e, 'Inténtalo más tarde.'));
+      this.toast('error', 'No se pudo generar el enlace', this.mensajeError(e, 'Inténtalo más tarde.'));
+    } finally {
+      this.restableciendo.set(null);
     }
+  }
+
+  private mostrarAcceso(acceso: AccesoCliente, titulo: string): void {
+    this.tituloAcceso.set(titulo);
+    this.acceso.set(acceso);
+    this.accesoVisible.set(true);
   }
 
   // ---------- Eliminar (borrado lógico) ----------
@@ -319,6 +393,19 @@ export class ClientesComponent implements OnInit {
   etiquetaMembresia(estado: MembresiaCliente['estado']): string {
     return { activo: 'Activa', programado: 'Programada', vencido: 'Vencida', cancelado: 'Cancelada' }[estado];
   }
+
+  etiquetaAcceso(estado: EstadoAcceso | null): string {
+    return estado ? ESTADOS_ACCESO[estado].etiqueta : 'Sin usuario';
+  }
+
+  severidadAcceso(estado: EstadoAcceso | null): 'warn' | 'success' | 'secondary' {
+    return estado ? ESTADOS_ACCESO[estado].severidad : 'secondary';
+  }
+
+  readonly abreviaturaDocumento = abreviaturaDocumento;
+  readonly nombreDocumento = nombreDocumento;
+  readonly mensajeDocumento = mensajeDocumento;
+  readonly maxLongitudDocumento = maxLongitudDocumento;
 
   private reemplazar(cliente: Cliente): void {
     this.clientes.update((lista) => lista.map((c) => (c.id === cliente.id ? cliente : c)));

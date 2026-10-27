@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { LoginRequest, LoginResponse } from '../models/login.model';
+import { LoginClienteRequest, LoginRequest, LoginResponse } from '../models/login.model';
+import { ActivacionRequest, ValidacionToken } from '../models/acceso.model';
 import { environment } from '../../environments/environment';
 
 const TOKEN_KEY = 'auth_token';
@@ -25,6 +26,23 @@ export class AuthService {
 				}
 			}),
 		);
+	}
+
+	/**
+	 * Login de clientes por documento. El token no se guarda como sesión del panel: los clientes
+	 * no tienen acceso a la gestión (el backend responde 403 a todo) y aún no existe un portal de clientes.
+	 */
+	loginCliente(credentials: LoginClienteRequest): Observable<LoginResponse> {
+		return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials);
+	}
+
+	// Página pública /activar
+	validarActivacion(token: string): Observable<ValidacionToken> {
+		return this.http.get<ValidacionToken>(`${this.apiUrl}/activacion/validar`, { params: { token } });
+	}
+
+	activar(datos: ActivacionRequest): Observable<void> {
+		return this.http.post<void>(`${this.apiUrl}/activacion`, datos);
 	}
 
 	logout(): void {
@@ -51,6 +69,12 @@ export class AuthService {
 	esAdministrador(): boolean {
 		const rol = this.getRol().normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
 		return rol === 'ADMINISTRADOR' || rol === 'SOPORTE TECNICO';
+	}
+
+	// Registrar clientes y generar sus enlaces de acceso (el backend vuelve a validarlo)
+	puedeGestionarAccesos(): boolean {
+		const rol = this.getRol().normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+		return rol === 'RECEPCIONISTA' || this.esAdministrador();
 	}
 
 	// Solo lee los claims para mostrarlos; la firma la valida el backend

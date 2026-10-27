@@ -12,6 +12,13 @@
   --p-inputtext-border-radius: 6px;
   --p-iconfield-icon-color: #a3a3a3;
 
+  --p-select-background: #1e1e1e;
+  --p-select-border-color: #2e2e2e;
+  --p-select-hover-border-color: #3a3a3a;
+  --p-select-focus-border-color: var(--color-marca);
+  --p-select-color: #ffffff;
+  --p-select-border-radius: 6px;
+
   --p-button-border-radius: 6px;
   --p-button-primary-background: var(--color-marca);
   --p-button-primary-border-color: var(--color-marca);
@@ -44,6 +51,16 @@
 
 .login ::ng-deep .p-inputtext {
   height: 40px;
+}
+
+.login ::ng-deep .p-select {
+  height: 40px;
+  align-items: center;
+}
+
+.login-texto {
+  color: #a3a3a3;
+  font-size: 14px;
 }
 
 .login ::ng-deep .p-button {

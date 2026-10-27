@@ -13,7 +13,9 @@
         </p>
       }
     </div>
-    <app-boton-principal texto="Nuevo cliente" icono="pi pi-user-plus" (clic)="abrirNuevo()" />
+    @if (puedeGestionarAccesos) {
+      <app-boton-principal texto="Nuevo cliente" icono="pi pi-user-plus" (clic)="abrirNuevo()" />
+    }
   </div>
 
   <!-- Filtros -->
@@ -24,7 +26,7 @@
         pInputText
         type="search"
         class="w-full"
-        placeholder="Buscar por nombre, DNI, correo o celular"
+        placeholder="Buscar por nombre, documento, correo o celular"
         aria-label="Buscar clientes"
         [ngModel]="busqueda()"
         (ngModelChange)="busqueda.set($event)"
@@ -65,13 +67,14 @@
         [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [showCurrentPageReport]="true"
         currentPageReportTemplate="{first}–{last} de {totalRecords}"
         [rowHover]="true"
-        [tableStyle]="{ 'min-width': '62rem' }"
+        [tableStyle]="{ 'min-width': '70rem' }"
       >
         <ng-template #header>
           <tr>
             <th pSortableColumn="nombre">Cliente <p-sorticon field="nombre" /></th>
-            <th>DNI</th>
+            <th>Documento</th>
             <th>Celular</th>
+            <th>Acceso</th>
             <th>Membresía</th>
             <th>Entrenador</th>
             <th pSortableColumn="fechaRegistro">Registro <p-sorticon field="fechaRegistro" /></th>
@@ -91,12 +94,19 @@
                 </span>
                 <div class="min-w-0">
                   <p class="truncate font-medium text-gray-900 dark:text-zinc-100">{{ nombreCompleto(c) }}</p>
-                  <p class="truncate text-xs text-gray-500 dark:text-zinc-400">{{ c.correo }}</p>
+                  @if (c.correo) {
+                    <p class="truncate text-xs text-gray-500 dark:text-zinc-400">{{ c.correo }}</p>
+                  }
                 </div>
               </div>
             </td>
-            <td class="tabular-nums text-gray-700 dark:text-zinc-300">{{ c.dni }}</td>
+            <td class="tabular-nums text-gray-700 dark:text-zinc-300">
+              <span class="text-xs text-gray-500 dark:text-zinc-400">{{ abreviaturaDocumento(c.tipoDocumento) }}</span> {{ c.dni }}
+            </td>
             <td class="tabular-nums text-gray-700 dark:text-zinc-300">{{ c.celular ?? '—' }}</td>
+            <td>
+              <p-tag [severity]="severidadAcceso(c.estadoAcceso)" [value]="etiquetaAcceso(c.estadoAcceso)" />
+            </td>
             <td>
               @if (c.membresia; as m) {
                 <div class="flex flex-col items-start gap-1">
@@ -119,7 +129,9 @@
                 <app-boton-icono accion="ver" [etiqueta]="'Ver datos de ' + nombreCompleto(c)" tooltip="Ver datos" (clic)="verDetalle(c)" />
                 <app-boton-icono accion="editar" [etiqueta]="'Editar a ' + nombreCompleto(c)" tooltip="Editar" (clic)="abrirEditar(c)" />
                 <app-boton-icono accion="asignar" [etiqueta]="'Asignar entrenador a ' + nombreCompleto(c)" tooltip="Asignar entrenador" (clic)="abrirEntrenador(c)" />
-                <app-boton-icono accion="correo" [etiqueta]="'Reenviar contraseña a ' + nombreCompleto(c)" [tooltip]="c.tieneUsuario ? 'Reenviar contraseña temporal' : 'Sin usuario'" [deshabilitado]="!c.tieneUsuario" (clic)="confirmarReenvio(c)" />
+                @if (puedeGestionarAccesos) {
+                  <app-boton-icono accion="clave" [etiqueta]="'Restablecer acceso de ' + nombreCompleto(c)" tooltip="Restablecer acceso" [deshabilitado]="restableciendo() === c.id" (clic)="confirmarRestablecer(c)" />
+                }
                 <app-boton-icono accion="eliminar" [etiqueta]="'Eliminar a ' + nombreCompleto(c)" tooltip="Eliminar" (clic)="confirmarEliminacion(c)" />
               </div>
             </td>
@@ -128,13 +140,13 @@
 
         <ng-template #emptymessage>
           <tr>
-            <td colspan="7" class="py-12! text-center!">
+            <td colspan="8" class="py-12! text-center!">
               <i class="pi pi-users mb-2 text-2xl! text-gray-300 dark:text-zinc-600"></i>
               @if (clientes().length) {
                 <p class="text-sm text-gray-500 dark:text-zinc-400">Ningún cliente coincide con la búsqueda.</p>
               } @else {
                 <p class="text-sm text-gray-500 dark:text-zinc-400">Aún no hay clientes registrados.</p>
-                <button type="button" class="mt-2 cursor-pointer text-sm font-semibold text-red-800 hover:underline dark:text-red-400" (click)="abrirNuevo()">
+                <button type="button" [hidden]="!puedeGestionarAccesos" class="mt-2 cursor-pointer text-sm font-semibold text-red-800 hover:underline dark:text-red-400" (click)="abrirNuevo()">
                   Registrar el primero
                 </button>
               }
@@ -156,6 +168,57 @@
   [breakpoints]="{ '640px': '95vw' }"
 >
   <form [formGroup]="form" (ngSubmit)="guardar()" id="form-cliente" class="grid grid-cols-1 gap-4 pt-1 sm:grid-cols-2" novalidate>
+    <!-- El documento va primero: con un DNI se autocompletan nombre y apellidos -->
+    <div class="flex flex-col gap-1.5">
+      <label for="tipoDocumento" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Tipo de documento *</label>
+      <p-select inputId="tipoDocumento" formControlName="tipoDocumento" [options]="tiposDocumento" optionLabel="label" optionValue="value"
+        appendTo="body" class="w-full" />
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <div class="flex items-center justify-between gap-2">
+        <label for="numeroDocumento" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Número de documento *</label>
+        @if (!editando() && dni.disponible()) {
+          <button type="button" (click)="dni.consultar()" [disabled]="!dni.puedeConsultar()"
+            class="inline-flex cursor-pointer items-center gap-1 text-xs font-semibold text-red-800 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline dark:text-red-400 dark:disabled:text-zinc-600"
+            [attr.aria-label]="'Consultar datos del DNI'" title="Autocompletar nombre y apellidos con el DNI">
+            <i [class]="dni.consultando() ? 'pi pi-spinner pi-spin' : 'pi pi-search'" class="text-xs!" aria-hidden="true"></i>
+            Consultar
+          </button>
+        }
+      </div>
+      <p-iconfield class="w-full">
+        <input pInputText id="numeroDocumento" formControlName="numeroDocumento" autocomplete="off" class="w-full"
+          [attr.inputmode]="tipoSeleccionado() === 'DNI' ? 'numeric' : 'text'" [maxlength]="maxLongitudDocumento(tipoSeleccionado())"
+          [invalid]="campoInvalido('numeroDocumento')" [attr.aria-busy]="dni.consultando()" />
+        @if (dni.consultando()) {
+          <p-inputicon class="pi pi-spinner pi-spin" aria-label="Buscando datos del DNI" />
+        }
+      </p-iconfield>
+      @if (campoInvalido('numeroDocumento')) {
+        <small class="text-red-600 dark:text-red-400">
+          {{ form.controls.numeroDocumento.hasError('required') ? 'El número de documento es obligatorio.' : mensajeDocumento(tipoSeleccionado()) }}
+        </small>
+      } @else if (dni.aviso(); as a) {
+        @if (a.tipo === 'autocompletado') {
+          <small class="text-gray-500 dark:text-zinc-400"><i class="pi pi-check mr-1 text-xs!" aria-hidden="true"></i>{{ a.texto }}</small>
+        } @else if (a.tipo === 'registrado') {
+          <small class="text-amber-700 dark:text-amber-400">
+            {{ a.texto }}.
+            @if (a.idCliente) {
+              <button type="button" class="cursor-pointer font-semibold underline" (click)="verClienteExistente(a.idCliente)">Ver cliente</button>
+            }
+          </small>
+        } @else {
+          <small class="text-amber-700 dark:text-amber-400">{{ a.texto }}</small>
+        }
+      } @else if (dni.consultando()) {
+        <small class="text-gray-500 dark:text-zinc-400">Buscando datos del DNI…</small>
+      } @else if (!editando()) {
+        <small class="text-gray-500 dark:text-zinc-400">Con este documento iniciará sesión.</small>
+      }
+    </div>
+
     <div class="flex flex-col gap-1.5">
       <label for="nombre" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Nombre *</label>
       <input pInputText id="nombre" formControlName="nombre" autocomplete="off" [invalid]="campoInvalido('nombre')" />
@@ -178,28 +241,24 @@
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label for="dni" class="text-sm font-medium text-gray-700 dark:text-zinc-300">DNI *</label>
-      <input pInputText id="dni" formControlName="dni" inputmode="numeric" maxlength="8" autocomplete="off" [invalid]="campoInvalido('dni')" />
-      @if (campoInvalido('dni')) {
-        <small class="text-red-600 dark:text-red-400">Debe tener 8 dígitos.</small>
+      <label for="celular" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Celular{{ editando() ? '' : ' *' }}</label>
+      <input pInputText id="celular" formControlName="celular" inputmode="tel" maxlength="9" autocomplete="off" [invalid]="campoInvalido('celular')" />
+      @if (campoInvalido('celular')) {
+        <small class="text-red-600 dark:text-red-400">
+          {{ form.controls.celular.hasError('required') ? 'El celular es obligatorio.' : '9 dígitos, empezando con 9.' }}
+        </small>
+      } @else if (!editando()) {
+        <small class="text-gray-500 dark:text-zinc-400">Aquí recibirá por WhatsApp el enlace para activar su cuenta.</small>
       }
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label for="correo" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Correo *</label>
+      <label for="correo" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Correo</label>
       <input pInputText id="correo" type="email" formControlName="correo" autocomplete="off" [invalid]="campoInvalido('correo')" />
       @if (campoInvalido('correo')) {
         <small class="text-red-600 dark:text-red-400">Ingresa un correo válido.</small>
-      } @else if (!editando()) {
-        <small class="text-gray-500 dark:text-zinc-400">Será su usuario y recibirá ahí la contraseña temporal.</small>
-      }
-    </div>
-
-    <div class="flex flex-col gap-1.5">
-      <label for="celular" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Celular</label>
-      <input pInputText id="celular" formControlName="celular" inputmode="tel" maxlength="9" autocomplete="off" [invalid]="campoInvalido('celular')" />
-      @if (campoInvalido('celular')) {
-        <small class="text-red-600 dark:text-red-400">9 dígitos, empezando con 9.</small>
+      } @else {
+        <small class="text-gray-500 dark:text-zinc-400">Opcional.</small>
       }
     </div>
 
@@ -238,7 +297,7 @@
 
       <dl class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
         <div>
-          <dt class="text-xs text-gray-500 dark:text-zinc-400">DNI</dt>
+          <dt class="text-xs text-gray-500 dark:text-zinc-400">{{ nombreDocumento(d.cliente.tipoDocumento) }}</dt>
           <dd class="tabular-nums text-gray-900 dark:text-zinc-100">{{ d.cliente.dni }}</dd>
         </div>
         <div>
@@ -247,7 +306,7 @@
         </div>
         <div class="col-span-2">
           <dt class="text-xs text-gray-500 dark:text-zinc-400">Correo</dt>
-          <dd class="break-all text-gray-900 dark:text-zinc-100">{{ d.cliente.correo }}</dd>
+          <dd class="break-all text-gray-900 dark:text-zinc-100">{{ d.cliente.correo ?? '—' }}</dd>
         </div>
         <div>
           <dt class="text-xs text-gray-500 dark:text-zinc-400">Entrenador</dt>
@@ -255,7 +314,15 @@
         </div>
         <div>
           <dt class="text-xs text-gray-500 dark:text-zinc-400">Acceso al sistema</dt>
-          <dd class="text-gray-900 dark:text-zinc-100">{{ d.cliente.tieneUsuario ? 'Con usuario' : 'Sin usuario' }}</dd>
+          <dd class="mt-0.5">
+            <p-tag [severity]="severidadAcceso(d.cliente.estadoAcceso)" [value]="etiquetaAcceso(d.cliente.estadoAcceso)" />
+          </dd>
+          @if (puedeGestionarAccesos) {
+            <button type="button" class="mt-1.5 cursor-pointer text-xs font-semibold text-red-800 hover:underline dark:text-red-400"
+              (click)="confirmarRestablecer(d.cliente)">
+              Restablecer acceso
+            </button>
+          }
         </div>
         <div class="col-span-2">
           <dt class="text-xs text-gray-500 dark:text-zinc-400">Observaciones</dt>
@@ -322,3 +389,6 @@
     <app-boton-principal texto="Guardar" icono="pi pi-check" [cargando]="asignando()" (clic)="guardarEntrenador()" />
   </ng-template>
 </p-dialog>
+
+<!-- Enlace de activación / restablecimiento (solo se muestra aquí) -->
+<app-enlace-acceso [(visible)]="accesoVisible" [(acceso)]="acceso" [titulo]="tituloAcceso()" />

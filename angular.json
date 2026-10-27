@@ -52,6 +52,17 @@
                   "with": "src/environments/environment.development.ts"
                 }
               ]
+            },
+            "lan": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.lan.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -64,6 +75,9 @@
             },
             "development": {
               "buildTarget": "GymFrontend:build:development"
+            },
+            "lan": {
+              "buildTarget": "GymFrontend:build:lan"
             }
           },
           "defaultConfiguration": "development"

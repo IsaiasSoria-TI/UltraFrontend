@@ -1,0 +1,147 @@
+<div class="dark login-page flex min-h-dvh w-full items-center justify-center px-4 py-10">
+  <div class="login w-full max-w-96.25">
+    <!-- TODO: logo -->
+    <div class="mx-auto mb-6 h-20 w-20"></div>
+
+    @switch (estado()) {
+      @case ('cargando') {
+        <div class="flex flex-col gap-4" aria-busy="true">
+          <p-skeleton height="2.5rem" />
+          <p-skeleton height="1.25rem" width="80%" />
+          <p-skeleton height="10rem" />
+        </div>
+      }
+
+      @case ('invalido') {
+        <div class="flex flex-col items-center gap-4 text-center">
+          <span class="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-800 text-neutral-300" aria-hidden="true">
+            <i class="pi pi-link text-xl!"></i>
+          </span>
+          <h1 class="text-[24px] font-semibold leading-tight text-white">Enlace no válido</h1>
+          <p class="login-texto">Este enlace no es válido o ya venció. Solicita uno nuevo en recepción.</p>
+        </div>
+      }
+
+      @case ('exito') {
+        <div class="flex flex-col items-center gap-4 text-center">
+          <span class="flex h-14 w-14 items-center justify-center rounded-full bg-green-950 text-green-400" aria-hidden="true">
+            <i class="pi pi-check text-xl!"></i>
+          </span>
+          <h1 class="text-[24px] font-semibold leading-tight text-white">
+            {{ esRestablecimiento() ? '¡Contraseña actualizada!' : '¡Tu cuenta está activa!' }}
+          </h1>
+          <p class="login-texto">Ya puedes iniciar sesión con tu {{ etiquetaDocumento() }} y tu nueva contraseña.</p>
+          <a pButton routerLink="/acceso-cliente" class="mt-2 w-full">Ir a iniciar sesión</a>
+        </div>
+      }
+
+      @case ('formulario') {
+        <h1 class="mb-2 text-center text-[26px] font-semibold leading-tight text-white">
+          @if (datos()?.nombre; as nombre) {
+            ¡Hola, {{ nombre }}!
+          } @else {
+            Crea tu contraseña
+          }
+        </h1>
+        <p class="login-texto mb-8 text-center">
+          {{ esRestablecimiento() ? 'Crea una nueva contraseña para tu cuenta.' : 'Activa tu cuenta creando tu contraseña.' }}
+        </p>
+
+        @if (error(); as e) {
+          <p-message severity="error" class="mb-6 block">{{ e }}</p-message>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="activar()" novalidate class="flex flex-col gap-6">
+          <div class="flex flex-col gap-2">
+            <label for="numeroDocumento" class="login-label">Confirma tu número de {{ etiquetaDocumento() }}</label>
+            <input
+              pInputText
+              id="numeroDocumento"
+              formControlName="numeroDocumento"
+              autocomplete="username"
+              maxlength="12"
+              class="w-full"
+              [attr.inputmode]="datos()?.tipoDocumento === 'DNI' ? 'numeric' : 'text'"
+              [placeholder]="datos()?.documentoOculto ?? ''"
+              [invalid]="mostrarError('numeroDocumento')"
+            />
+            @if (mostrarError('numeroDocumento')) {
+              <p-message severity="error" size="small" variant="simple">Ingresa tu número de documento.</p-message>
+            }
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label for="password" class="login-label">Nueva contraseña</label>
+            <p-iconfield class="w-full">
+              <input
+                pInputPassword
+                id="password"
+                formControlName="password"
+                autocomplete="new-password"
+                [(mask)]="mask"
+                [fluid]="true"
+                [invalid]="mostrarError('password')"
+              />
+              <p-inputicon (click)="mask = !mask" style="cursor: pointer" [attr.aria-label]="mask ? 'Mostrar contraseña' : 'Ocultar contraseña'">
+                @if (mask) {
+                  <svg data-p-icon="eye"></svg>
+                } @else {
+                  <svg data-p-icon="eye-slash"></svg>
+                }
+              </p-inputicon>
+            </p-iconfield>
+            <ul class="flex flex-col gap-1 text-sm" aria-label="Requisitos de la contraseña">
+              @for (r of requisitos(); track r.texto) {
+                <li class="flex items-center gap-2" [class.text-green-400]="r.cumple" [class.text-neutral-400]="!r.cumple">
+                  <i [class]="r.cumple ? 'pi pi-check-circle' : 'pi pi-circle'" class="text-xs!" aria-hidden="true"></i>
+                  {{ r.texto }}
+                  <span class="sr-only">{{ r.cumple ? '(cumplido)' : '(pendiente)' }}</span>
+                </li>
+              }
+            </ul>
+            @if (mostrarError('password')) {
+              <p-message severity="error" size="small" variant="simple">
+                {{ form.controls.password.hasError('required') ? 'Crea tu contraseña.' : 'Tu contraseña no cumple los requisitos.' }}
+              </p-message>
+            }
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label for="confirmacion" class="login-label">Repite la contraseña</label>
+            <p-iconfield class="w-full">
+              <input
+                pInputPassword
+                id="confirmacion"
+                formControlName="confirmacion"
+                autocomplete="new-password"
+                [(mask)]="maskConfirmacion"
+                [fluid]="true"
+                [invalid]="mostrarError('confirmacion') || confirmacionDistinta()"
+              />
+              <p-inputicon (click)="maskConfirmacion = !maskConfirmacion" style="cursor: pointer"
+                [attr.aria-label]="maskConfirmacion ? 'Mostrar contraseña' : 'Ocultar contraseña'">
+                @if (maskConfirmacion) {
+                  <svg data-p-icon="eye"></svg>
+                } @else {
+                  <svg data-p-icon="eye-slash"></svg>
+                }
+              </p-inputicon>
+            </p-iconfield>
+            @if (mostrarError('confirmacion')) {
+              <p-message severity="error" size="small" variant="simple">Repite tu contraseña.</p-message>
+            } @else if (confirmacionDistinta()) {
+              <p-message severity="error" size="small" variant="simple">Las contraseñas no coinciden.</p-message>
+            }
+          </div>
+
+          <button pButton type="submit" [fluid]="true" [disabled]="guardando()">
+            @if (guardando()) {
+              <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+            }
+            {{ esRestablecimiento() ? 'Guardar nueva contraseña' : 'Activar mi cuenta' }}
+          </button>
+        </form>
+      }
+    }
+  </div>
+</div>

@@ -14,6 +14,15 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/login/login').then((m) => m.LoginComponent)
     },
     {
+    // Públicas: login de clientes por documento y página del enlace de WhatsApp
+    path: 'acceso-cliente',
+    loadComponent: () => import('./pages/acceso-cliente/acceso-cliente').then((m) => m.AccesoClienteComponent)
+    },
+    {
+    path: 'activar',
+    loadComponent: () => import('./pages/activar/activar').then((m) => m.ActivarComponent)
+    },
+    {
     // Pantallas internas: comparten el sidebar y se cargan bajo demanda
     path: '',
     loadComponent: () => import('./components/layout/layout').then((m) => m.LayoutComponent),

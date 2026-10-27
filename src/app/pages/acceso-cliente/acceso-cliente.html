@@ -1,0 +1,90 @@
+<div class="dark login-page flex min-h-dvh w-full items-center justify-center px-4 py-10">
+  <div class="login w-full max-w-96.25">
+    <!-- TODO: logo -->
+    <div class="mx-auto mb-6 h-20 w-20"></div>
+
+    <h1 class="mb-2 text-center text-[28px] font-semibold leading-tight text-white">Acceso de clientes</h1>
+    <p class="login-texto mb-8 text-center">Ingresa con tu documento y la contraseña que creaste.</p>
+
+    @if (bienvenida(); as texto) {
+      <p-message severity="success" class="mb-6 block">
+        {{ texto }} Muy pronto podrás ver aquí tu membresía y tus avances.
+      </p-message>
+    }
+
+    @if (error(); as e) {
+      <p-message [severity]="e.severidad" class="mb-6 block">{{ e.texto }}</p-message>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="flex flex-col gap-6">
+      <div class="flex flex-col gap-2">
+        <label for="tipoDocumento" class="login-label">Tipo de documento</label>
+        <p-select inputId="tipoDocumento" formControlName="tipoDocumento" [options]="tiposDocumento" optionLabel="label"
+          optionValue="value" class="w-full" />
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="numeroDocumento" class="login-label">Número de documento</label>
+        <input
+          pInputText
+          id="numeroDocumento"
+          formControlName="numeroDocumento"
+          autocomplete="username"
+          class="w-full"
+          [attr.inputmode]="tipoSeleccionado() === 'DNI' ? 'numeric' : 'text'"
+          [maxlength]="maxLongitudDocumento(tipoSeleccionado())"
+          [invalid]="mostrarError('numeroDocumento')"
+        />
+        @if (mostrarError('numeroDocumento')) {
+          <p-message severity="error" size="small" variant="simple">
+            @if (form.controls.numeroDocumento.hasError('required')) {
+              Ingresa tu número de documento.
+            } @else {
+              {{ mensajeDocumento(tipoSeleccionado()) }}
+            }
+          </p-message>
+        }
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="password" class="login-label">Contraseña</label>
+        <p-iconfield class="w-full">
+          <input
+            pInputPassword
+            id="password"
+            formControlName="password"
+            autocomplete="current-password"
+            [(mask)]="mask"
+            [fluid]="true"
+            [invalid]="mostrarError('password')"
+          />
+          <p-inputicon (click)="mask = !mask" style="cursor: pointer" [attr.aria-label]="mask ? 'Mostrar contraseña' : 'Ocultar contraseña'">
+            @if (mask) {
+              <svg data-p-icon="eye"></svg>
+            } @else {
+              <svg data-p-icon="eye-slash"></svg>
+            }
+          </p-inputicon>
+        </p-iconfield>
+        @if (mostrarError('password')) {
+          <p-message severity="error" size="small" variant="simple">Ingresa tu contraseña.</p-message>
+        }
+      </div>
+
+      <button pButton type="submit" [fluid]="true" [disabled]="loading()">
+        @if (loading()) {
+          <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+        }
+        Iniciar sesión
+      </button>
+    </form>
+
+    <p class="login-texto mt-8 text-center">
+      ¿Olvidaste tu contraseña o aún no activas tu cuenta? Pide tu enlace en recepción.
+    </p>
+    <p class="mt-4 text-center text-sm text-neutral-400">
+      ¿Eres parte del personal?
+      <a routerLink="/login" class="login-link font-semibold">Ingresa aquí</a>
+    </p>
+  </div>
+</div>
