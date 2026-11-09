@@ -1,6 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -96,11 +95,11 @@ export class AccesoClienteComponent {
     }
   }
 
-  // 403 = cuenta pendiente de activación, 423 = bloqueada; ambos traen el mensaje del backend
+  // El backend responde 401 con el mismo mensaje para documento inexistente, cuenta sin activar, bloqueada o clave
+  // incorrecta (no revela cuál es); el mensaje ya trae la ayuda para el primer ingreso y para esperar tras los fallos
   private detalleError(error: unknown): { severidad: 'error' | 'warn'; texto: string } {
-    const aviso = error instanceof HttpErrorResponse && (error.status === 403 || error.status === 423);
     return {
-      severidad: aviso ? 'warn' : 'error',
+      severidad: 'error',
       texto: mensajeError(error, 'Ocurrió un error inesperado. Inténtalo de nuevo.'),
     };
   }
