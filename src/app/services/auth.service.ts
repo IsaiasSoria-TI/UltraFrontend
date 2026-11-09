@@ -13,6 +13,7 @@ interface TokenPayload {
 	sub?: string;
 	rol?: string;
 	id_usuario?: number;
+	exp?: number; // vencimiento en segundos desde epoch
 }
 
 @Injectable({ providedIn: 'root' })
@@ -78,8 +79,20 @@ export class AuthService {
 		return localStorage.getItem(TOKEN_KEY);
 	}
 
+	// Hay token y no ha vencido; si venció se descarta para no dejar al usuario con una sesión muerta
 	isLoggedIn(): boolean {
-		return !!this.getToken();
+		if (!this.getToken()) return false;
+		if (this.tokenVencido()) {
+			this.logout();
+			return false;
+		}
+		return true;
+	}
+
+	private tokenVencido(): boolean {
+		const exp = this.getPayload()?.exp;
+		// Un token ilegible o sin exp se deja pasar: el backend decide (responde 401 y el interceptor cierra la sesión)
+		return typeof exp === 'number' && exp * 1000 <= Date.now();
 	}
 
 	getUsername(): string {
