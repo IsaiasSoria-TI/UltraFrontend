@@ -47,6 +47,10 @@ import { AccesoCliente } from '../../models/acceso.model';
             El enlace vence el <span class="font-medium text-gray-900 dark:text-zinc-100">{{ a.expiraEn | date: "dd/MM/yyyy 'a las' HH:mm" }}</span>
             y solo puede usarse una vez.
           </p>
+          <p class="text-xs text-gray-500 dark:text-zinc-400">
+            Envíalo antes de cerrar esta ventana: el enlace no se vuelve a mostrar. Si se pierde o vence, genera otro
+            desde la lista de clientes con «{{ a.tipo === 'ACTIVACION' ? 'Reenviar enlace de activación' : 'Restablecer contraseña' }}».
+          </p>
 
           <div class="flex flex-col gap-2 sm:flex-row">
             @if (a.whatsappUrl) {

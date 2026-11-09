@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 import { adminGuard } from './guards/admin.guard';
+import { clienteGuard, contrasenaGuard, entrenadorGuard, personalGuard, sesionGuard } from './guards/rol.guard';
 
 export const routes: Routes = [
     {
@@ -23,10 +24,74 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/activar/activar').then((m) => m.ActivarComponent)
     },
     {
+    // Cambio de contraseña: obligatorio si es temporal, o voluntario desde el perfil
+    path: 'cambiar-contrasena',
+    loadComponent: () =>
+        import('./pages/cambiar-contrasena/cambiar-contrasena').then((m) => m.CambiarContrasenaComponent),
+    canActivate: [sesionGuard]
+    },
+    {
+    // Portal del cliente (después de /acceso-cliente)
+    path: 'portal',
+    loadComponent: () => import('./pages/portal/portal-layout').then((m) => m.PortalLayoutComponent),
+    canActivate: [clienteGuard, contrasenaGuard],
+    children: [
+        {
+        path: '',
+        loadComponent: () => import('./pages/portal/inicio/inicio').then((m) => m.PortalInicioComponent)
+        },
+        {
+        path: 'membresia',
+        loadComponent: () => import('./pages/portal/membresia/membresia').then((m) => m.PortalMembresiaComponent)
+        },
+        {
+        path: 'progreso',
+        loadComponent: () => import('./pages/portal/progreso/progreso').then((m) => m.PortalProgresoComponent)
+        },
+        {
+        path: 'perfil',
+        loadComponent: () => import('./pages/portal/perfil/perfil').then((m) => m.PortalPerfilComponent)
+        }
+    ]
+    },
+    {
+    // Portal del entrenador: sus clientes asignados y sus controles de peso
+    path: 'entrenador',
+    loadComponent: () => import('./pages/entrenador/entrenador-layout').then((m) => m.EntrenadorLayoutComponent),
+    canActivate: [entrenadorGuard, contrasenaGuard],
+    children: [
+        {
+        path: '',
+        loadComponent: () => import('./pages/entrenador/inicio/inicio').then((m) => m.EntrenadorInicioComponent)
+        },
+        {
+        path: 'clientes',
+        loadComponent: () => import('./pages/entrenador/clientes/clientes').then((m) => m.EntrenadorClientesComponent)
+        },
+        {
+        path: 'clientes/:id',
+        loadComponent: () => import('./pages/entrenador/cliente/cliente').then((m) => m.EntrenadorClienteComponent)
+        },
+        {
+        path: 'clientes/:id/control',
+        loadComponent: () =>
+            import('./pages/entrenador/registrar-control/registrar-control').then((m) => m.RegistrarControlComponent)
+        },
+        {
+        path: 'controles',
+        loadComponent: () => import('./pages/entrenador/controles/controles').then((m) => m.EntrenadorControlesComponent)
+        },
+        {
+        path: 'perfil',
+        loadComponent: () => import('./pages/entrenador/perfil/perfil').then((m) => m.EntrenadorPerfilComponent)
+        }
+    ]
+    },
+    {
     // Pantallas internas: comparten el sidebar y se cargan bajo demanda
     path: '',
     loadComponent: () => import('./components/layout/layout').then((m) => m.LayoutComponent),
-    canActivate: [authGuard],
+    canActivate: [authGuard, personalGuard, contrasenaGuard],
     children: [
         {
         path: 'dashboard',

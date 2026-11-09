@@ -1,0 +1,60 @@
+@if (store.datos(); as d) {
+  <div class="flex flex-col gap-4 lg:gap-6">
+    <header>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Hola, {{ d.perfil.nombre }}</h1>
+      <p class="text-sm text-gray-500 first-letter:uppercase dark:text-zinc-400">{{ hoy | date: "EEEE d 'de' MMMM" }}</p>
+    </header>
+
+    <div class="grid gap-4 lg:grid-cols-3">
+      <div class="lg:col-span-2">
+        @if (d.membresia; as m) {
+          <app-tarjeta-membresia [membresia]="m" />
+        } @else {
+          <article class="flex h-full flex-col items-start gap-2 rounded-xl border border-dashed border-gray-300 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
+            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300">
+              <i class="pi pi-id-card" aria-hidden="true"></i>
+            </span>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-zinc-100">Aún no tienes una membresía</h2>
+            <p class="text-sm text-gray-500 dark:text-zinc-400">Conoce los planes y acércate a recepción para empezar.</p>
+            <a routerLink="/portal/membresia" class="text-sm font-semibold text-red-800 hover:underline dark:text-red-300">Ver planes</a>
+          </article>
+        }
+      </div>
+
+      <div class="flex flex-col gap-4">
+        <a routerLink="/portal/progreso"
+          class="tarjeta flex flex-col gap-2 p-5 transition-colors hover:border-gray-300 dark:hover:border-zinc-700">
+          <span class="flex items-center justify-between text-sm font-medium text-gray-500 dark:text-zinc-400">
+            Peso actual <i class="pi pi-chevron-right text-xs!" aria-hidden="true"></i>
+          </span>
+          @if (d.controles.length) {
+            <span class="text-3xl font-bold tabular-nums text-gray-900 dark:text-zinc-100">{{ d.controles[0].peso | number: '1.1-1' }} kg</span>
+            <span class="text-xs text-gray-500 dark:text-zinc-400">
+              @if (variacion(); as v) {
+                {{ v > 0 ? '+' : '' }}{{ v | number: '1.1-1' }} kg desde tu primer control
+              } @else if (variacion() === 0) {
+                Sin cambios desde tu primer control
+              } @else {
+                Tu primer control: {{ d.controles[0].fecha | date: 'dd/MM/yyyy' }}
+              }
+            </span>
+          } @else {
+            <span class="text-3xl font-bold text-gray-300 dark:text-zinc-600">—</span>
+            <span class="text-xs text-gray-500 dark:text-zinc-400">Aún no tienes controles registrados</span>
+          }
+        </a>
+
+        <section class="tarjeta flex flex-col gap-2 p-5" aria-labelledby="titulo-entrenador">
+          <h2 id="titulo-entrenador" class="text-sm font-medium text-gray-500 dark:text-zinc-400">Tu entrenador</h2>
+          @if (d.entrenador; as e) {
+            <p class="text-lg font-semibold text-gray-900 dark:text-zinc-100">{{ e.nombre }}</p>
+          } @else {
+            <p class="text-sm text-gray-500 dark:text-zinc-400">Aún no tienes un entrenador asignado. Pídelo en recepción.</p>
+          }
+        </section>
+      </div>
+    </div>
+  </div>
+} @else {
+  <app-carga [error]="store.error()" (reintentar)="store.cargar()" />
+}

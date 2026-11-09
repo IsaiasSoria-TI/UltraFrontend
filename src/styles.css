@@ -30,3 +30,8 @@
 .p-toast {
   max-width: calc(100vw - 2rem);
 }
+
+/* Portales de clientes y entrenadores: tarjeta blanca del diseño de Figma */
+@utility tarjeta {
+  @apply rounded-xl border border-gray-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900;
+}

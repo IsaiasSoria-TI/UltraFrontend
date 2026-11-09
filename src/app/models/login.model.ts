@@ -17,4 +17,6 @@ export interface LoginResponse {
 	message?: string;
 	userId?: number;
 	username?: string;
+	// true si la contraseña es temporal y debe cambiarse antes de usar el sistema
+	cambiarContrasena?: boolean;
 }

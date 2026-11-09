@@ -1,0 +1,97 @@
+@if (clientes(); as lista) {
+  <div class="flex flex-col gap-4">
+    <header>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Mis clientes</h1>
+      <p class="text-sm text-gray-500 dark:text-zinc-400">
+        {{ lista.length }} {{ lista.length === 1 ? 'cliente asignado' : 'clientes asignados' }}
+      </p>
+    </header>
+
+    @if (lista.length) {
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <p-iconfield class="w-full lg:w-90">
+          <p-inputicon class="pi pi-search" />
+          <input pInputText type="search" class="w-full" placeholder="Buscar por nombre o documento" aria-label="Buscar cliente"
+            [value]="busqueda()" (input)="busqueda.set($any($event.target).value)" />
+        </p-iconfield>
+        <div class="flex flex-wrap gap-2" role="group" aria-label="Filtrar por membresía">
+          @for (f of filtros; track f.valor) {
+            @let activo = filtro() === f.valor;
+            <button type="button" (click)="filtro.set(f.valor)" [attr.aria-pressed]="activo"
+              class="flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold"
+              [class]="activo
+                ? 'border-red-900 bg-red-900 text-white dark:border-red-800 dark:bg-red-800'
+                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200'">
+              {{ f.etiqueta }}
+              <span class="font-normal" [class]="activo ? 'text-red-100' : 'text-gray-500 dark:text-zinc-400'">{{ cantidades()[f.valor] }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (visibles().length) {
+        <!-- Móvil y tablet: lista -->
+        <ul class="tarjeta divide-y divide-gray-100 overflow-hidden dark:divide-zinc-800 lg:hidden">
+          @for (c of visibles(); track c.id) {
+            <li><app-fila-cliente [cliente]="c" [detalle]="detalleCliente(c)" /></li>
+          }
+        </ul>
+
+        <!-- Escritorio: tabla -->
+        <div class="tarjeta hidden overflow-hidden lg:block">
+          <table class="w-full text-left text-sm">
+            <thead class="border-b border-gray-200 bg-gray-50 text-xs font-semibold uppercase text-gray-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+              <tr>
+                <th scope="col" class="px-5 py-2.5">Cliente</th>
+                <th scope="col" class="px-3 py-2.5">Plan</th>
+                <th scope="col" class="px-3 py-2.5">Estado</th>
+                <th scope="col" class="px-3 py-2.5">Último control</th>
+                <th scope="col" class="px-3 py-2.5 text-right">Peso</th>
+                <th scope="col" class="w-10"><span class="sr-only">Abrir</span></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-zinc-800">
+              @for (c of visibles(); track c.id) {
+                <tr class="relative hover:bg-gray-50 dark:hover:bg-zinc-800/60">
+                  <td class="px-5 py-3">
+                    <div class="flex items-center gap-3">
+                      <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-50 text-xs font-semibold text-red-800 dark:bg-red-950/60 dark:text-red-300" aria-hidden="true">{{ iniciales(c) }}</span>
+                      <div class="min-w-0">
+                        <!-- El enlace cubre toda la fila -->
+                        <a [routerLink]="['/entrenador/clientes', c.id]" class="block truncate font-medium text-gray-900 after:absolute after:inset-0 dark:text-zinc-100">{{ nombreCompleto(c) }}</a>
+                        <span class="text-xs text-gray-500 dark:text-zinc-400">{{ abreviaturaDocumento(c.tipoDocumento) }} {{ c.numeroDocumento }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-3 py-3 text-gray-700 dark:text-zinc-300">{{ c.membresia?.plan ?? '—' }}</td>
+                  <td class="px-3 py-3">
+                    @if (c.membresia; as m) {
+                      <app-estado-membresia [estado]="estadoVisual(m)" />
+                    } @else {
+                      <span class="text-xs text-gray-500 dark:text-zinc-400">Sin membresía</span>
+                    }
+                  </td>
+                  <td class="px-3 py-3 text-gray-700 dark:text-zinc-300">{{ c.ultimoControl ? (c.ultimoControl | date: 'dd/MM/yyyy') : 'Sin controles' }}</td>
+                  <td class="px-3 py-3 text-right font-medium tabular-nums text-gray-900 dark:text-zinc-100">{{ c.pesoActual !== null ? (c.pesoActual | number: '1.1-1') + ' kg' : '—' }}</td>
+                  <td class="pr-5 text-right"><i class="pi pi-chevron-right text-xs! text-gray-400" aria-hidden="true"></i></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="tarjeta p-4 text-sm text-gray-500 dark:text-zinc-400">Ningún cliente coincide con la búsqueda o el filtro.</p>
+      }
+    } @else {
+      <article class="flex flex-col items-start gap-2 rounded-xl border border-dashed border-gray-300 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300">
+          <i class="pi pi-users" aria-hidden="true"></i>
+        </span>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-zinc-100">Aún no tienes clientes asignados</h2>
+        <p class="text-sm text-gray-500 dark:text-zinc-400">Recepción asigna el entrenador desde la ficha de cada cliente.</p>
+      </article>
+    }
+  </div>
+} @else {
+  <app-carga [error]="error()" (reintentar)="cargar()" />
+}

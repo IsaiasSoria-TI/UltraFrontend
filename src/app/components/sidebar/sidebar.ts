@@ -27,7 +27,7 @@ interface SidebarSection {
 })
 export class SidebarComponent {
   private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
+  protected readonly router = inject(Router);
   protected readonly themeService = inject(ThemeService);
 
   // Solo aplican en móvil/tablet: en escritorio el sidebar siempre está visible

@@ -1,0 +1,104 @@
+<a routerLink="/entrenador/clientes" class="mb-4 inline-flex items-center gap-2 text-sm font-medium text-red-800 hover:underline dark:text-red-300">
+  <i class="pi pi-chevron-left text-xs!" aria-hidden="true"></i> Mis clientes
+</a>
+
+@if (detalle(); as d) {
+  <div class="grid gap-4 lg:grid-cols-3 lg:gap-6">
+    <!-- Columna izquierda: datos del cliente -->
+    <div class="flex flex-col gap-4">
+      <section class="tarjeta flex flex-col gap-4 p-5" aria-label="Cliente">
+        <div class="flex items-center gap-4">
+          <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-red-50 text-xl font-bold text-red-800 dark:bg-red-950/60 dark:text-red-300" aria-hidden="true">{{ iniciales() }}</span>
+          <div class="flex min-w-0 flex-col items-start gap-1">
+            <h1 class="text-lg font-semibold text-gray-900 dark:text-zinc-100">{{ nombre() }}</h1>
+            <p class="text-xs text-gray-500 dark:text-zinc-400">
+              {{ abreviaturaDocumento(d.cliente.tipoDocumento) }} {{ d.cliente.numeroDocumento }}
+              @if (d.celular) {
+                · <a [href]="'tel:' + d.celular" class="hover:underline">{{ d.celular }}</a>
+              }
+            </p>
+            @if (membresia(); as m) {
+              <app-estado-membresia [estado]="m.estado" />
+            }
+          </div>
+        </div>
+        <a routerLink="control"
+          class="flex items-center justify-center gap-2 rounded-lg bg-red-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-900 dark:bg-red-800 dark:hover:bg-red-900">
+          <i class="pi pi-plus text-sm!" aria-hidden="true"></i> Registrar control
+        </a>
+      </section>
+
+      <section class="flex flex-col gap-3" aria-labelledby="titulo-membresia">
+        <h2 id="titulo-membresia" class="text-lg font-semibold text-gray-900 dark:text-zinc-100">Membresía</h2>
+        @if (membresia(); as m) {
+          <dl class="tarjeta divide-y divide-gray-100 px-5 py-1 text-sm dark:divide-zinc-800">
+            <div class="flex justify-between gap-4 py-3"><dt class="text-gray-500 dark:text-zinc-400">Plan</dt><dd class="font-medium text-gray-900 dark:text-zinc-100">{{ m.plan }}</dd></div>
+            <div class="flex justify-between gap-4 py-3"><dt class="text-gray-500 dark:text-zinc-400">Vigencia</dt><dd class="text-right font-medium text-gray-900 dark:text-zinc-100">{{ m.fechaInicio | date: 'dd/MM/yyyy' }} – {{ m.fechaFin | date: 'dd/MM/yyyy' }}</dd></div>
+            <div class="flex justify-between gap-4 py-3"><dt class="text-gray-500 dark:text-zinc-400">Estado</dt><dd class="font-medium text-gray-900 dark:text-zinc-100">{{ m.dias }}</dd></div>
+          </dl>
+        } @else {
+          <p class="tarjeta p-4 text-sm text-gray-500 dark:text-zinc-400">No tiene membresías registradas.</p>
+        }
+      </section>
+    </div>
+
+    <!-- Columna derecha: progreso -->
+    <div class="flex flex-col gap-4 lg:col-span-2">
+      <section class="grid grid-cols-3 gap-3" aria-label="Resumen de progreso">
+        <div class="tarjeta flex flex-col gap-1 p-4">
+          <span class="text-xs text-gray-500 dark:text-zinc-400">Peso actual</span>
+          <span class="text-lg font-bold tabular-nums text-gray-900 dark:text-zinc-100 sm:text-xl">{{ resumen() ? (resumen()!.actual | number: '1.1-1') + ' kg' : '—' }}</span>
+        </div>
+        <div class="tarjeta flex flex-col gap-1 p-4">
+          <span class="text-xs text-gray-500 dark:text-zinc-400">Variación</span>
+          <span class="text-lg font-bold tabular-nums text-gray-900 dark:text-zinc-100 sm:text-xl">
+            @if (resumen()?.variacion != null) {
+              {{ resumen()!.variacion! > 0 ? '+' : '' }}{{ resumen()!.variacion | number: '1.1-1' }} kg
+            } @else {
+              —
+            }
+          </span>
+        </div>
+        <div class="tarjeta flex flex-col gap-1 p-4">
+          <span class="text-xs text-gray-500 dark:text-zinc-400">Controles</span>
+          <span class="text-lg font-bold tabular-nums text-gray-900 dark:text-zinc-100 sm:text-xl">{{ resumen()?.total ?? 0 }}</span>
+        </div>
+      </section>
+
+      @if (d.controles.length) {
+        <section class="tarjeta flex flex-col gap-4 p-4" aria-labelledby="titulo-evolucion">
+          <h2 id="titulo-evolucion" class="text-sm font-semibold text-gray-900 dark:text-zinc-100">Evolución del peso (kg)</h2>
+          <app-grafico-peso [controles]="d.controles" />
+        </section>
+      }
+
+      <section class="flex flex-col gap-3" aria-labelledby="titulo-historial">
+        <h2 id="titulo-historial" class="text-lg font-semibold text-gray-900 dark:text-zinc-100">Historial de controles</h2>
+        @if (d.controles.length) {
+          <ul class="tarjeta divide-y divide-gray-100 px-4 dark:divide-zinc-800">
+            @for (c of d.controles; track c.id) {
+              <li class="flex items-center justify-between gap-4 py-3">
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-gray-900 dark:text-zinc-100">{{ c.fecha | date: 'dd/MM/yyyy' }}</p>
+                  @if (c.registradoPor) {
+                    <p class="truncate text-xs text-gray-500 dark:text-zinc-400">{{ c.registradoPor }}</p>
+                  }
+                </div>
+                <span class="text-sm font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ c.peso | number: '1.1-1' }} kg</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="tarjeta p-4 text-sm text-gray-500 dark:text-zinc-400">Aún no tiene controles. Registra el primero.</p>
+        }
+      </section>
+    </div>
+  </div>
+} @else if (noAsignado()) {
+  <article class="tarjeta flex flex-col items-start gap-2 p-5">
+    <h1 class="text-lg font-semibold text-gray-900 dark:text-zinc-100">Cliente no disponible</h1>
+    <p class="text-sm text-gray-500 dark:text-zinc-400">No tienes asignado a este cliente o ya no está activo.</p>
+  </article>
+} @else {
+  <app-carga [error]="error()" (reintentar)="cargar()" />
+}

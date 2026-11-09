@@ -1,0 +1,66 @@
+<a [routerLink]="['/entrenador/clientes', detalle()?.cliente?.id ?? '']" class="mb-4 inline-flex items-center gap-2 text-sm font-medium text-red-800 hover:underline dark:text-red-300">
+  <i class="pi pi-chevron-left text-xs!" aria-hidden="true"></i> {{ nombre() || 'Volver' }}
+</a>
+
+@if (detalle(); as d) {
+  <div class="flex max-w-xl flex-col gap-4">
+    <header>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Registrar control</h1>
+      <p class="text-sm text-gray-500 dark:text-zinc-400">Registra el peso de {{ nombre() }} para su historial de progreso.</p>
+    </header>
+
+    @if (errorGuardar(); as e) {
+      <p-message severity="error">{{ e }}</p-message>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="guardar()" novalidate class="flex flex-col gap-4">
+      <div class="tarjeta flex flex-col gap-4 p-5">
+        <div class="flex flex-col gap-1.5">
+          <label for="fecha" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Fecha</label>
+          <input pInputText id="fecha" type="date" formControlName="fecha" class="w-full" [min]="fechaMinima()" [max]="hoy"
+            [invalid]="mostrarError('fecha')" />
+          @if (mostrarError('fecha')) {
+            <p-message severity="error" size="small" variant="simple">
+              @if (form.controls.fecha.hasError('required')) {
+                Indica la fecha del control.
+              } @else if (form.controls.fecha.hasError('futura')) {
+                La fecha no puede ser posterior a hoy.
+              } @else {
+                No puede ser anterior al registro del cliente ({{ d.fechaRegistro | date: 'dd/MM/yyyy' }}).
+              }
+            </p-message>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="peso" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Peso (kg)</label>
+          <input pInputText id="peso" type="number" inputmode="decimal" step="0.1" min="20" max="400" formControlName="peso"
+            class="w-full" placeholder="Ej. 78.5" [invalid]="mostrarError('peso')" />
+          @if (mostrarError('peso')) {
+            <p-message severity="error" size="small" variant="simple">
+              @if (form.controls.peso.hasError('required')) {
+                Indica el peso.
+              } @else {
+                El peso debe estar entre 20 y 400 kg.
+              }
+            </p-message>
+          } @else if (d.cliente.pesoActual !== null && d.cliente.ultimoControl) {
+            <p class="text-xs text-gray-500 dark:text-zinc-400">
+              Último registro: {{ d.cliente.pesoActual | number: '1.1-1' }} kg el {{ d.cliente.ultimoControl | date: 'dd/MM/yyyy' }}
+            </p>
+          }
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-end gap-3">
+        <a [routerLink]="['/entrenador/clientes', d.cliente.id]"
+          class="flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">
+          Cancelar
+        </a>
+        <app-boton-principal texto="Guardar control" icono="pi pi-check" tipo="submit" [cargando]="guardando()" />
+      </div>
+    </form>
+  </div>
+} @else {
+  <app-carga [error]="errorCarga()" (reintentar)="cargar()" />
+}

@@ -28,3 +28,10 @@ export interface ActivacionRequest {
 	password: string;
 	confirmacion: string;
 }
+
+// POST /auth/contrasena
+export interface CambiarContrasenaRequest {
+	actual: string;
+	nueva: string;
+	confirmacion: string;
+}

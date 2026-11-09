@@ -1,0 +1,74 @@
+@if (resumen(); as r) {
+  <div class="flex flex-col gap-4 lg:gap-6">
+    <header>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Hola, {{ primerNombre() }}</h1>
+      <p class="text-sm text-gray-500 first-letter:uppercase dark:text-zinc-400">{{ hoy | date: "EEEE d 'de' MMMM" }}</p>
+    </header>
+
+    <section class="grid grid-cols-3 gap-3 lg:gap-4" aria-label="Indicadores">
+      <a routerLink="/entrenador/clientes" class="tarjeta flex flex-col gap-2 p-4 hover:border-gray-300 dark:hover:border-zinc-700">
+        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300"><i class="pi pi-users text-sm!" aria-hidden="true"></i></span>
+        <span class="text-xl font-bold tabular-nums text-gray-900 dark:text-zinc-100">{{ r.clientesAsignados }}</span>
+        <span class="text-xs text-gray-500 dark:text-zinc-400">Clientes asignados</span>
+      </a>
+      <a routerLink="/entrenador/controles" class="tarjeta flex flex-col gap-2 p-4 hover:border-gray-300 dark:hover:border-zinc-700">
+        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300"><i class="pi pi-clipboard text-sm!" aria-hidden="true"></i></span>
+        <span class="text-xl font-bold tabular-nums text-gray-900 dark:text-zinc-100">{{ r.controlesMes }}</span>
+        <span class="text-xs text-gray-500 dark:text-zinc-400">Controles este mes</span>
+      </a>
+      <a routerLink="/entrenador/clientes" [queryParams]="{ filtro: 'porVencer' }" class="tarjeta flex flex-col gap-2 p-4 hover:border-gray-300 dark:hover:border-zinc-700">
+        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300"><i class="pi pi-exclamation-triangle text-sm!" aria-hidden="true"></i></span>
+        <span class="text-xl font-bold tabular-nums text-gray-900 dark:text-zinc-100">{{ r.membresiasPorVencer }}</span>
+        <span class="text-xs text-gray-500 dark:text-zinc-400">Membresías por vencer</span>
+      </a>
+    </section>
+
+    <div class="grid gap-4 lg:grid-cols-2 lg:gap-6">
+      <section class="flex flex-col gap-3" aria-labelledby="titulo-pendientes">
+        <div class="flex items-center justify-between gap-3">
+          <h2 id="titulo-pendientes" class="text-lg font-semibold text-gray-900 dark:text-zinc-100">Pendientes de control</h2>
+          @if (r.totalPendientes > r.pendientes.length) {
+            <span class="text-sm text-gray-500 dark:text-zinc-400">{{ r.pendientes.length }} de {{ r.totalPendientes }}</span>
+          }
+        </div>
+        @if (r.pendientes.length) {
+          <ul class="tarjeta divide-y divide-gray-100 overflow-hidden dark:divide-zinc-800">
+            @for (c of r.pendientes; track c.id) {
+              <li><app-fila-cliente [cliente]="c" [detalle]="textoUltimoControl(c)" /></li>
+            }
+          </ul>
+        } @else {
+          <p class="tarjeta p-4 text-sm text-gray-500 dark:text-zinc-400">
+            Todos tus clientes con membresía activa tienen un control de los últimos 30 días.
+          </p>
+        }
+      </section>
+
+      <section class="flex flex-col gap-3" aria-labelledby="titulo-ultimos">
+        <div class="flex items-center justify-between gap-3">
+          <h2 id="titulo-ultimos" class="text-lg font-semibold text-gray-900 dark:text-zinc-100">Últimos controles</h2>
+          <a routerLink="/entrenador/controles" class="text-sm font-medium text-red-800 hover:underline dark:text-red-300">Ver todos</a>
+        </div>
+        @if (r.ultimosControles.length) {
+          <ul class="tarjeta divide-y divide-gray-100 overflow-hidden dark:divide-zinc-800">
+            @for (c of r.ultimosControles; track c.id) {
+              <li>
+                <a [routerLink]="['/entrenador/clientes', c.idCliente]" class="flex items-center justify-between gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-zinc-800/60">
+                  <span class="min-w-0">
+                    <span class="block truncate text-sm font-medium text-gray-900 dark:text-zinc-100">{{ c.cliente }}</span>
+                    <span class="block text-xs text-gray-500 dark:text-zinc-400">{{ c.fecha | date: 'dd/MM/yyyy' }}</span>
+                  </span>
+                  <span class="text-sm font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ c.peso | number: '1.1-1' }} kg</span>
+                </a>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="tarjeta p-4 text-sm text-gray-500 dark:text-zinc-400">Aún no registras controles.</p>
+        }
+      </section>
+    </div>
+  </div>
+} @else {
+  <app-carga [error]="error()" (reintentar)="cargar()" />
+}

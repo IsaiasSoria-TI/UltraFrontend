@@ -101,6 +101,17 @@
         <i [class]="themeService.dark() ? 'pi pi-sun' : 'pi pi-moon'"></i>
       </button>
     </div>
+    <a
+      routerLink="/cambiar-contrasena"
+      [queryParams]="{ volver: router.url }"
+      title="Cambiar contraseña"
+      class="mt-1 flex h-11 w-full items-center gap-4 rounded-lg px-3.5 text-red-100/90 transition-colors duration-150 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-white/60"
+    >
+      <i class="pi pi-key w-5 shrink-0 text-center text-lg!" aria-hidden="true"></i>
+      <span class="whitespace-nowrap text-sm font-medium lg:opacity-0 transition-opacity duration-200 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
+        Cambiar contraseña
+      </span>
+    </a>
     <button
       type="button"
       (click)="logout()"

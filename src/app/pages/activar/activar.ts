@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputPasswordModule } from 'primeng/inputpassword';
@@ -55,6 +55,7 @@ export class ActivarComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   private token = '';
   readonly estado = signal<Estado>('cargando');
@@ -130,7 +131,7 @@ export class ActivarComponent implements OnInit {
     this.guardando.set(true);
     const v = this.form.getRawValue();
     try {
-      await firstValueFrom(
+      const sesion = await firstValueFrom(
         this.authService.activar({
           token: this.token,
           numeroDocumento: v.numeroDocumento.trim().toUpperCase(),
@@ -138,6 +139,11 @@ export class ActivarComponent implements OnInit {
           confirmacion: v.confirmacion,
         }),
       );
+      // El backend inicia la sesión: el cliente entra directo a su portal sin volver a escribir sus datos
+      if (sesion?.token) {
+        await this.router.navigate([this.authService.rutaInicio()]);
+        return;
+      }
       this.estado.set('exito');
     } catch (e) {
       this.error.set(mensajeError(e, 'No se pudo guardar tu contraseña. Inténtalo de nuevo.'));

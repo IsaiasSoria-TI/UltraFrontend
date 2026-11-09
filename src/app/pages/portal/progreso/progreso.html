@@ -1,0 +1,68 @@
+@if (store.datos(); as d) {
+  <div class="flex flex-col gap-4 lg:gap-6">
+    <header>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Mi progreso</h1>
+      <p class="text-sm text-gray-500 dark:text-zinc-400">Tus controles de peso registrados por tu entrenador.</p>
+    </header>
+
+    @if (resumen(); as r) {
+      <section class="grid grid-cols-3 gap-3" aria-label="Resumen">
+        <div class="tarjeta flex flex-col gap-1 p-4">
+          <span class="text-xs text-gray-500 dark:text-zinc-400">Actual</span>
+          <span class="text-lg font-bold tabular-nums text-gray-900 dark:text-zinc-100 sm:text-xl">{{ r.actual | number: '1.1-1' }} kg</span>
+        </div>
+        <div class="tarjeta flex flex-col gap-1 p-4">
+          <span class="text-xs text-gray-500 dark:text-zinc-400">Inicial</span>
+          <span class="text-lg font-bold tabular-nums text-gray-900 dark:text-zinc-100 sm:text-xl">{{ r.inicial | number: '1.1-1' }} kg</span>
+        </div>
+        <div class="tarjeta flex flex-col gap-1 p-4">
+          <span class="text-xs text-gray-500 dark:text-zinc-400">Variación</span>
+          <span class="text-lg font-bold tabular-nums text-gray-900 dark:text-zinc-100 sm:text-xl">{{ r.variacion > 0 ? '+' : '' }}{{ r.variacion | number: '1.1-1' }} kg</span>
+        </div>
+      </section>
+
+      <div class="grid gap-4 lg:grid-cols-5">
+        <section class="tarjeta flex flex-col gap-4 p-4 lg:col-span-3" aria-labelledby="titulo-evolucion">
+          <h2 id="titulo-evolucion" class="text-sm font-semibold text-gray-900 dark:text-zinc-100">Evolución de tu peso (kg)</h2>
+          <app-grafico-peso [controles]="d.controles" />
+        </section>
+
+        <section class="flex flex-col gap-3 lg:col-span-2" aria-labelledby="titulo-controles">
+          <div>
+            <h2 id="titulo-controles" class="text-lg font-semibold text-gray-900 dark:text-zinc-100">Controles</h2>
+            <p class="text-xs text-gray-500 dark:text-zinc-400">{{ d.controles.length }} {{ d.controles.length === 1 ? 'registro' : 'registros' }}</p>
+          </div>
+          <ul class="tarjeta divide-y divide-gray-100 px-4 dark:divide-zinc-800">
+            @for (c of d.controles; track c.id) {
+              <li class="flex items-center justify-between gap-4 py-3">
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-gray-900 dark:text-zinc-100">{{ c.fecha | date: 'dd/MM/yyyy' }}</p>
+                  @if (c.registradoPor) {
+                    <p class="truncate text-xs text-gray-500 dark:text-zinc-400">{{ c.registradoPor }}</p>
+                  }
+                </div>
+                <span class="text-sm font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ c.peso | number: '1.1-1' }} kg</span>
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+    } @else {
+      <article class="flex flex-col items-start gap-2 rounded-xl border border-dashed border-gray-300 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300">
+          <i class="pi pi-chart-line" aria-hidden="true"></i>
+        </span>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-zinc-100">Aún no tienes controles</h2>
+        <p class="text-sm text-gray-500 dark:text-zinc-400">
+          @if (d.entrenador) {
+            {{ d.entrenador.nombre }} registrará aquí tus controles de peso.
+          } @else {
+            Cuando tengas un entrenador asignado, verás aquí tus controles de peso.
+          }
+        </p>
+      </article>
+    }
+  </div>
+} @else {
+  <app-carga [error]="store.error()" (reintentar)="store.cargar()" />
+}

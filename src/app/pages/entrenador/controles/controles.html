@@ -1,0 +1,44 @@
+@if (controles(); as lista) {
+  <div class="flex max-w-3xl flex-col gap-4">
+    <header>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Controles</h1>
+      <p class="text-sm text-gray-500 dark:text-zinc-400">Los controles de peso que registraste.</p>
+    </header>
+
+    <div class="flex flex-wrap gap-2" role="group" aria-label="Periodo">
+      @for (p of periodos; track p.valor) {
+        @let activo = periodo() === p.valor;
+        <button type="button" (click)="periodo.set(p.valor)" [attr.aria-pressed]="activo"
+          class="flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold"
+          [class]="activo
+            ? 'border-red-900 bg-red-900 text-white dark:border-red-800 dark:bg-red-800'
+            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200'">
+          {{ p.etiqueta }}
+          <span class="font-normal" [class]="activo ? 'text-red-100' : 'text-gray-500 dark:text-zinc-400'">{{ cantidades()[p.valor] }}</span>
+        </button>
+      }
+    </div>
+
+    @if (visibles().length) {
+      <ul class="tarjeta divide-y divide-gray-100 overflow-hidden dark:divide-zinc-800">
+        @for (c of visibles(); track c.id) {
+          <li>
+            <a [routerLink]="['/entrenador/clientes', c.idCliente]" class="flex items-center justify-between gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-zinc-800/60">
+              <span class="min-w-0">
+                <span class="block truncate text-sm font-medium text-gray-900 dark:text-zinc-100">{{ c.cliente }}</span>
+                <span class="block text-xs text-gray-500 dark:text-zinc-400">{{ c.fecha | date: 'dd/MM/yyyy' }}</span>
+              </span>
+              <span class="text-sm font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ c.peso | number: '1.1-1' }} kg</span>
+            </a>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="tarjeta p-4 text-sm text-gray-500 dark:text-zinc-400">
+        {{ lista.length ? 'No registraste controles en este periodo.' : 'Aún no registras controles. Hazlo desde la ficha de cada cliente.' }}
+      </p>
+    }
+  </div>
+} @else {
+  <app-carga [error]="error()" (reintentar)="cargar()" />
+}

@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputPasswordModule } from 'primeng/inputpassword';
@@ -43,11 +43,11 @@ type Campo = 'numeroDocumento' | 'password';
 export class AccesoClienteComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly loading = signal(false);
   readonly enviado = signal(false);
   readonly error = signal<{ severidad: 'error' | 'warn'; texto: string } | null>(null);
-  readonly bienvenida = signal<string | null>(null);
   mask = true;
 
   readonly tiposDocumento = TIPOS_DOCUMENTO;
@@ -88,9 +88,7 @@ export class AccesoClienteComponent {
       await firstValueFrom(
         this.authService.loginCliente({ tipoDocumento, numeroDocumento: numeroDocumento.trim().toUpperCase(), password }),
       );
-      this.bienvenida.set('Iniciaste sesión correctamente.');
-      this.form.reset();
-      this.enviado.set(false);
+      await this.router.navigate([this.authService.rutaInicio()]);
     } catch (e) {
       this.error.set(this.detalleError(e));
     } finally {

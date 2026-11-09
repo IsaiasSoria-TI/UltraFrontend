@@ -32,6 +32,10 @@ export interface Cliente {
 	tieneUsuario: boolean;
 	// null si no tiene usuario
 	estadoAcceso: EstadoAcceso | null;
+	// true si tiene un enlace de activación o restablecimiento sin usar y sin vencer
+	enlaceVigente: boolean;
+	// Vencimiento de ese enlace (null si no tiene)
+	enlaceExpiraEn: string | null;
 	entrenador: Entrenador | null;
 	membresia: MembresiaCliente | null;
 }

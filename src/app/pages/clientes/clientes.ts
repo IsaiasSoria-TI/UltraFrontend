@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -23,6 +23,7 @@ import { BotonCancelarComponent, BotonIconoComponent, BotonPrincipalComponent } 
 import { EnlaceAccesoComponent } from '../../components/enlace-acceso/enlace-acceso';
 import { AuthService } from '../../services/auth.service';
 import { ClienteService } from '../../services/cliente.service';
+import { AccesoClienteEvento, EventosClientesService } from '../../services/eventos-clientes.service';
 import { Cliente, ClienteDetalle, ClienteRequest, Entrenador, MembresiaCliente } from '../../models/cliente.model';
 import { AccesoCliente, EstadoAcceso, TipoDocumento } from '../../models/acceso.model';
 import {
@@ -78,6 +79,11 @@ export class ClientesComponent implements OnInit {
   readonly puedeGestionarAccesos = this.authService.puedeGestionarAccesos();
 
   readonly clientes = signal<Cliente[]>([]);
+
+  // Avisos en tiempo real del acceso de los clientes (SSE): null = esta pantalla no los recibe
+  readonly enVivo = signal<'conectando' | 'conectado' | 'reconectando' | null>(null);
+  // Reloj de la pantalla: un enlace pendiente pasa solo a "Enlace vencido" al llegar su vencimiento
+  readonly ahora = signal(Date.now());
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
@@ -133,6 +139,34 @@ export class ClientesComponent implements OnInit {
       this.tipoSeleccionado.set(tipo);
       this.form.controls.numeroDocumento.updateValueAndValidity();
     });
+
+    const reloj = setInterval(() => this.ahora.set(Date.now()), 30_000);
+    inject(DestroyRef).onDestroy(() => clearInterval(reloj));
+
+    // El backend solo envía los avisos a quien gestiona accesos (recepción y administración)
+    if (this.puedeGestionarAccesos) {
+      this.enVivo.set('conectando');
+      inject(EventosClientesService)
+        .escuchar()
+        .pipe(takeUntilDestroyed())
+        .subscribe((m) => {
+          switch (m.tipo) {
+            case 'conectado':
+              this.enVivo.set('conectado');
+              // Tras un corte pudo perderse algún aviso: se recarga la lista sin mostrar el esqueleto
+              if (m.reconexion) void this.cargar(true);
+              break;
+            case 'desconectado':
+              this.enVivo.set('reconectando');
+              break;
+            case 'sinPermiso':
+              this.enVivo.set(null);
+              break;
+            case 'acceso':
+              this.aplicarCambioAcceso(m.evento);
+          }
+        });
+    }
   }
 
   // Detalle
@@ -151,15 +185,49 @@ export class ClientesComponent implements OnInit {
     this.cargar();
   }
 
-  async cargar(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
+  // silencioso: recarga en segundo plano (tras un aviso en tiempo real), sin esqueleto ni mensaje de error
+  async cargar(silencioso = false): Promise<void> {
+    if (!silencioso) {
+      this.loading.set(true);
+      this.error.set(null);
+    }
     try {
       this.clientes.set(await firstValueFrom(this.clienteService.listar()));
     } catch (e) {
-      this.error.set(this.mensajeError(e, 'No se pudieron cargar los clientes.'));
+      if (!silencioso) this.error.set(this.mensajeError(e, 'No se pudieron cargar los clientes.'));
     } finally {
-      this.loading.set(false);
+      if (!silencioso) this.loading.set(false);
+    }
+  }
+
+  // Aviso en tiempo real: actualiza la fila (y la ficha abierta) sin recargar la pantalla
+  private aplicarCambioAcceso(e: AccesoClienteEvento): void {
+    const actual = this.clientes().find((c) => c.id === e.idCliente);
+    if (!e.clienteActivo) {
+      this.clientes.update((lista) => lista.filter((c) => c.id !== e.idCliente));
+      if (this.detalle()?.cliente.id === e.idCliente) this.detalleVisible.set(false);
+      return;
+    }
+    if (!actual) {
+      // Cliente nuevo o reactivado desde otra pantalla: se trae la lista completa
+      void this.cargar(true);
+      return;
+    }
+    const acceso = {
+      tieneUsuario: e.tieneUsuario,
+      estadoAcceso: e.estadoAcceso,
+      enlaceVigente: e.enlaceVigente,
+      enlaceExpiraEn: e.enlaceExpiraEn,
+    };
+    this.reemplazar({ ...actual, ...acceso });
+    const abierto = this.detalle();
+    if (abierto?.cliente.id === e.idCliente) {
+      this.detalle.set({ ...abierto, cliente: { ...abierto.cliente, ...acceso } });
+    }
+    if (e.motivo === 'CUENTA_ACTIVADA') {
+      this.toast('success', 'Cuenta activada', `${e.nombre} activó su cuenta y ya puede entrar a su portal.`, 6000);
+    } else if (e.motivo === 'CONTRASENA_RESTABLECIDA') {
+      this.toast('success', 'Contraseña restablecida', `${e.nombre} creó su nueva contraseña.`, 6000);
     }
   }
 
@@ -223,7 +291,8 @@ export class ClientesComponent implements OnInit {
         this.toast('success', 'Cliente actualizado', `${this.nombreCompleto(actualizado)} se actualizó correctamente.`);
       } else {
         const r = await firstValueFrom(this.clienteService.registrar(datos));
-        this.clientes.update((lista) => [r.cliente, ...lista]);
+        // Sin duplicar: el aviso en tiempo real pudo traerlo antes que esta respuesta
+        this.clientes.update((lista) => [r.cliente, ...lista.filter((c) => c.id !== r.cliente.id)]);
         if (r.acceso) {
           this.mostrarAcceso(r.acceso, 'Cliente registrado');
         } else {
@@ -265,12 +334,12 @@ export class ClientesComponent implements OnInit {
     }
   }
 
-  // ---------- Restablecer acceso (enlace por WhatsApp) ----------
+  // ---------- Reenviar activación o restablecer contraseña (enlace por WhatsApp) ----------
 
   confirmarRestablecer(cliente: Cliente): void {
     const pendiente = cliente.estadoAcceso !== 'ACTIVO';
     this.confirmationService.confirm({
-      header: 'Restablecer acceso',
+      header: this.accionAcceso(cliente),
       message: pendiente
         ? `Se generará un nuevo enlace de activación para ${this.nombreCompleto(cliente)}. Los enlaces anteriores dejarán de funcionar.`
         : `Se generará un enlace para que ${this.nombreCompleto(cliente)} cree una nueva contraseña. Los enlaces anteriores dejarán de funcionar y su cuenta se desbloqueará.`,
@@ -286,10 +355,14 @@ export class ClientesComponent implements OnInit {
     this.restableciendo.set(cliente.id);
     try {
       const acceso = await firstValueFrom(this.clienteService.restablecerAcceso(cliente.id));
-      // Si no tenía usuario, ahora queda pendiente de activación
-      if (!cliente.tieneUsuario) {
-        this.reemplazar({ ...cliente, tieneUsuario: true, estadoAcceso: 'PENDIENTE_ACTIVACION' });
-      }
+      // Si no tenía usuario, ahora queda pendiente de activación; en todos los casos tiene un enlace vigente
+      this.reemplazar({
+        ...cliente,
+        tieneUsuario: true,
+        estadoAcceso: cliente.tieneUsuario ? cliente.estadoAcceso : 'PENDIENTE_ACTIVACION',
+        enlaceVigente: true,
+        enlaceExpiraEn: acceso.expiraEn,
+      });
       this.mostrarAcceso(acceso, acceso.tipo === 'ACTIVACION' ? 'Enlace de activación' : 'Restablecer contraseña');
     } catch (e) {
       this.toast('error', 'No se pudo generar el enlace', this.mensajeError(e, 'Inténtalo más tarde.'));
@@ -394,12 +467,25 @@ export class ClientesComponent implements OnInit {
     return { activo: 'Activa', programado: 'Programada', vencido: 'Vencida', cancelado: 'Cancelada' }[estado];
   }
 
-  etiquetaAcceso(estado: EstadoAcceso | null): string {
-    return estado ? ESTADOS_ACCESO[estado].etiqueta : 'Sin usuario';
+  // Pendiente sin un enlace vigente: recepción debe reenviarlo
+  enlaceVencido(c: Cliente): boolean {
+    if (c.estadoAcceso !== 'PENDIENTE_ACTIVACION') return false;
+    return !c.enlaceExpiraEn || new Date(c.enlaceExpiraEn).getTime() <= this.ahora();
   }
 
-  severidadAcceso(estado: EstadoAcceso | null): 'warn' | 'success' | 'secondary' {
-    return estado ? ESTADOS_ACCESO[estado].severidad : 'secondary';
+  etiquetaAcceso(c: Cliente): string {
+    if (this.enlaceVencido(c)) return 'Enlace vencido';
+    return c.estadoAcceso ? ESTADOS_ACCESO[c.estadoAcceso].etiqueta : 'Sin usuario';
+  }
+
+  severidadAcceso(c: Cliente): 'warn' | 'success' | 'secondary' | 'danger' {
+    if (this.enlaceVencido(c)) return 'danger';
+    return c.estadoAcceso ? ESTADOS_ACCESO[c.estadoAcceso].severidad : 'secondary';
+  }
+
+  // La acción depende de la cuenta: quien ya activó restablece su contraseña; el resto recibe su enlace de activación
+  accionAcceso(c: Cliente): string {
+    return c.estadoAcceso === 'ACTIVO' ? 'Restablecer contraseña' : 'Reenviar enlace de activación';
   }
 
   readonly abreviaturaDocumento = abreviaturaDocumento;

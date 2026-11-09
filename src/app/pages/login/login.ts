@@ -75,7 +75,7 @@ export class LoginComponent {
     try {
       // El backend acepta el correo en el campo username
       await firstValueFrom(this.authService.login({ username: correo.trim(), password }));
-      await this.router.navigate(['/dashboard']);
+      await this.router.navigate([this.authService.rutaInicio()]);
     } catch (error) {
       this.messageService.add({
         severity: 'error',

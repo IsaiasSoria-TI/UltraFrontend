@@ -1,0 +1,89 @@
+<div class="dark login-page flex min-h-dvh w-full items-center justify-center px-4 py-10">
+  <div class="login w-full max-w-96.25">
+    @if (listo()) {
+      <div class="flex flex-col items-center gap-4 text-center">
+        <span class="flex h-14 w-14 items-center justify-center rounded-full bg-green-950 text-green-400" aria-hidden="true">
+          <i class="pi pi-check text-xl!"></i>
+        </span>
+        <h1 class="text-[24px] font-semibold leading-tight text-white">¡Contraseña actualizada!</h1>
+        <p class="login-texto">Desde ahora inicia sesión con tu nueva contraseña.</p>
+        <button pButton type="button" class="mt-2 w-full" (click)="continuar()">Continuar</button>
+      </div>
+    } @else {
+      <h1 class="mb-2 text-center text-[26px] font-semibold leading-tight text-white">
+        {{ obligatorio ? 'Crea tu nueva contraseña' : 'Cambiar contraseña' }}
+      </h1>
+      <p class="login-texto mb-8 text-center">
+        @if (obligatorio) {
+          Tu contraseña actual es temporal. Por seguridad, cámbiala antes de continuar.
+        } @else {
+          Escribe tu contraseña actual y la nueva.
+        }
+      </p>
+
+      @if (error(); as e) {
+        <p-message severity="error" class="mb-6 block">{{ e }}</p-message>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="guardar()" novalidate class="flex flex-col gap-6">
+        @for (c of campos; track c.campo) {
+          <div class="flex flex-col gap-2">
+            <label [for]="c.campo" class="login-label">{{ c.etiqueta }}</label>
+            <p-iconfield class="w-full">
+              <input
+                pInputPassword
+                [id]="c.campo"
+                [formControlName]="c.campo"
+                [autocomplete]="c.autocomplete"
+                [(mask)]="mascaras[c.campo]"
+                [fluid]="true"
+                [invalid]="mostrarError(c.campo) || !!errorGrupo(c.campo)"
+              />
+              <p-inputicon (click)="mascaras[c.campo] = !mascaras[c.campo]" style="cursor: pointer"
+                [attr.aria-label]="mascaras[c.campo] ? 'Mostrar contraseña' : 'Ocultar contraseña'">
+                @if (mascaras[c.campo]) {
+                  <svg data-p-icon="eye"></svg>
+                } @else {
+                  <svg data-p-icon="eye-slash"></svg>
+                }
+              </p-inputicon>
+            </p-iconfield>
+
+            @if (c.campo === 'nueva') {
+              <ul class="flex flex-col gap-1 text-sm" aria-label="Requisitos de la contraseña">
+                @for (r of requisitos(); track r.texto) {
+                  <li class="flex items-center gap-2" [class.text-green-400]="r.cumple" [class.text-neutral-400]="!r.cumple">
+                    <i [class]="r.cumple ? 'pi pi-check-circle' : 'pi pi-circle'" class="text-xs!" aria-hidden="true"></i>
+                    {{ r.texto }}
+                    <span class="sr-only">{{ r.cumple ? '(cumplido)' : '(pendiente)' }}</span>
+                  </li>
+                }
+              </ul>
+            }
+
+            @if (mostrarError(c.campo)) {
+              <p-message severity="error" size="small" variant="simple">{{ mensajeCampo(c.campo) }}</p-message>
+            } @else if (errorGrupo(c.campo); as e) {
+              <p-message severity="error" size="small" variant="simple">{{ e }}</p-message>
+            }
+          </div>
+        }
+
+        <button pButton type="submit" [fluid]="true" [disabled]="guardando()">
+          @if (guardando()) {
+            <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+          }
+          Guardar contraseña
+        </button>
+      </form>
+
+      <p class="login-texto mt-6 text-center">
+        @if (obligatorio) {
+          <button type="button" class="login-link cursor-pointer font-semibold" (click)="salir()">Cerrar sesión</button>
+        } @else {
+          <button type="button" class="login-link cursor-pointer font-semibold" (click)="cancelar()">Cancelar</button>
+        }
+      </p>
+    }
+  </div>
+</div>
