@@ -1,7 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
@@ -19,6 +20,7 @@ import { AuthService } from '../../services/auth.service';
 import { UsuarioService } from '../../services/usuario.service';
 import { Rol, Usuario, UsuarioRequest } from '../../models/admin.model';
 import { mensajeError } from '../../utils/http-error';
+import { autocompletarDni } from '../../utils/autocompletar-dni';
 
 /**
  * Caso de uso "Gestionar usuarios y roles" (Administrador): personal del gimnasio.
@@ -42,16 +44,18 @@ import { mensajeError } from '../../utils/http-error';
     ToastModule,
     SkeletonModule,
     MessageModule,
+    ConfirmDialogModule,
     BotonCancelarComponent,
     BotonIconoComponent,
     BotonPrincipalComponent,
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './usuarios.html',
 })
 export class UsuariosComponent implements OnInit {
   private readonly usuarioService = inject(UsuarioService);
   private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
   private readonly fb = inject(FormBuilder);
   readonly usuarioActual = inject(AuthService).getUsername();
 
@@ -68,7 +72,7 @@ export class UsuariosComponent implements OnInit {
     return this.usuarios().filter(
       (u) =>
         (rol === null || u.idRol === rol) &&
-        (!texto || `${this.nombreCompleto(u)} ${u.usuario} ${u.correo} ${u.dni}`.toLowerCase().includes(texto)),
+        (!texto || `${this.nombreCompleto(u)} ${u.correo} ${u.dni ?? ''}`.toLowerCase().includes(texto)),
     );
   });
 
@@ -80,12 +84,20 @@ export class UsuariosComponent implements OnInit {
     nombre: ['', [Validators.required, Validators.maxLength(100)]],
     apellidoPaterno: ['', [Validators.required, Validators.maxLength(100)]],
     apellidoMaterno: ['', Validators.maxLength(100)],
-    dni: ['', [Validators.required, Validators.pattern(/^\d{8}$/)]],
-    correo: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
+    // Opcional para el personal (inicia sesión con su correo)
+    dni: ['', Validators.pattern(/^\d{8}$/)],
     celular: ['', Validators.pattern(/^9\d{8}$/)],
-    usuario: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9._@-]{3,100}$/)]],
+    // El personal inicia sesión con este correo (es también su nombre interno de usuario: máx. 100)
+    correo: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
     idRol: [0, Validators.min(1)],
     contrasena: ['', [Validators.minLength(8), Validators.maxLength(72)]],
+  });
+
+  // Consulta de DNI (RENIEC vía apiperu.dev): solo al crear; en edición los datos ya existen
+  readonly dni = autocompletarDni(this.form, () => this.formVisible() && !this.editando(), {
+    campoDocumento: 'dni',
+    campoTipo: null,
+    verificarCon: 'la persona',
   });
 
   // Restablecer contraseña
@@ -131,10 +143,9 @@ export class UsuariosComponent implements OnInit {
       nombre: u.nombre,
       apellidoPaterno: u.apellidoPaterno ?? '',
       apellidoMaterno: u.apellidoMaterno ?? '',
-      dni: u.dni,
+      dni: u.dni ?? '',
       correo: u.correo,
       celular: u.celular ?? '',
-      usuario: u.usuario,
       idRol: u.idRol,
       contrasena: '',
     });
@@ -154,10 +165,9 @@ export class UsuariosComponent implements OnInit {
       nombre: v.nombre.trim(),
       apellidoPaterno: v.apellidoPaterno.trim(),
       apellidoMaterno: v.apellidoMaterno.trim() || null,
-      dni: v.dni.trim(),
+      dni: v.dni.trim() || null,
       correo: v.correo.trim(),
       celular: v.celular.trim() || null,
-      usuario: v.usuario.trim(),
       idRol: v.idRol,
       contrasena: actual ? null : v.contrasena,
     };
@@ -169,7 +179,8 @@ export class UsuariosComponent implements OnInit {
         : await firstValueFrom(this.usuarioService.crear(datos));
       this.usuarios.update((l) => (actual ? l.map((x) => (x.id === usuario.id ? usuario : x)) : [...l, usuario]));
       this.toast('success', actual ? 'Usuario actualizado' : 'Usuario creado',
-        actual ? usuario.usuario : `${usuario.usuario} ya puede iniciar sesión con la contraseña indicada.`);
+        actual ? this.nombreCompleto(usuario)
+          : `${this.nombreCompleto(usuario)} ya puede iniciar sesión con ${usuario.correo} y la contraseña indicada.`);
       this.formVisible.set(false);
       this.recargarRoles();
     } catch (e) {
@@ -186,11 +197,36 @@ export class UsuariosComponent implements OnInit {
       const actualizado = await firstValueFrom(this.usuarioService.cambiarEstado(u.id, estado));
       this.usuarios.update((l) => l.map((x) => (x.id === u.id ? actualizado : x)));
       this.toast('success', estado ? 'Usuario activado' : 'Usuario desactivado',
-        estado ? `${u.usuario} puede volver a iniciar sesión.` : `${u.usuario} ya no podrá iniciar sesión.`);
+        estado ? `${this.nombreCompleto(u)} puede volver a iniciar sesión.` : `${this.nombreCompleto(u)} ya no podrá iniciar sesión.`);
     } catch (e) {
       this.toast('error', 'No se pudo cambiar el estado', mensajeError(e, ''));
       this.cargar();
     }
+  }
+
+  // ---------- Eliminar ----------
+
+  confirmarEliminacion(u: Usuario): void {
+    this.confirmationService.confirm({
+      header: 'Eliminar usuario',
+      message: `Se eliminará a ${this.nombreCompleto(u)} (${u.correo}) de forma permanente. ` +
+        'Solo es posible si no tiene movimientos registrados; si los tiene, desactívalo.',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonProps: { severity: 'danger' },
+      rejectButtonProps: { severity: 'secondary', outlined: true },
+      accept: async () => {
+        try {
+          await firstValueFrom(this.usuarioService.eliminar(u.id));
+          this.usuarios.update((l) => l.filter((x) => x.id !== u.id));
+          this.toast('success', 'Usuario eliminado', this.nombreCompleto(u));
+          this.recargarRoles();
+        } catch (e) {
+          this.toast('error', 'No se pudo eliminar', mensajeError(e, ''));
+        }
+      },
+    });
   }
 
   // ---------- Contraseña ----------
@@ -208,7 +244,7 @@ export class UsuariosComponent implements OnInit {
     try {
       await firstValueFrom(this.usuarioService.restablecerContrasena(u.id, this.nuevaClave));
       this.claveVisible.set(false);
-      this.toast('success', 'Contraseña restablecida', `Comunícale a ${u.usuario} su nueva contraseña.`);
+      this.toast('success', 'Contraseña restablecida', `Comunícale a ${this.nombreCompleto(u)} su nueva contraseña.`);
     } catch (e) {
       this.toast('error', 'No se pudo restablecer', mensajeError(e, ''));
     } finally {

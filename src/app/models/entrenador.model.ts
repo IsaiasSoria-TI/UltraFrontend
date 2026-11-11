@@ -1,6 +1,6 @@
 import { TipoDocumento } from './acceso.model';
 import { MembresiaCliente } from './cliente.model';
-import { Control } from './portal.model';
+import { Control, Perimetros } from './portal.model';
 
 // Cliente asignado al entrenador (la membresía llega sin monto)
 export interface ClienteAsignado {
@@ -42,8 +42,9 @@ export interface ResumenEntrenador {
 	ultimosControles: ControlRegistrado[];
 }
 
-// fecha en yyyy-MM-dd
+// fecha en yyyy-MM-dd; perimetros null si no se midió ninguno
 export interface RegistrarControlRequest {
 	fecha: string;
 	peso: number;
+	perimetros: Perimetros | null;
 }

@@ -118,6 +118,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/compras/compras').then((m) => m.ComprasComponent)
         },
         {
+        // Personalización > Mi perfil: todo el personal
+        path: 'personalizacion/perfil',
+        loadComponent: () => import('./pages/personalizacion/mi-perfil').then((m) => m.MiPerfilComponent)
+        },
+        {
         // Administración: solo el administrador
         path: '',
         canActivateChild: [adminGuard],
@@ -145,6 +150,12 @@ export const routes: Routes = [
             {
             path: 'reportes',
             loadComponent: () => import('./pages/reportes/reportes').then((m) => m.ReportesComponent)
+            },
+            {
+            // Personalización > Gimnasio: el color de marca es de todo el gimnasio
+            path: 'personalizacion/gimnasio',
+            loadComponent: () =>
+                import('./pages/personalizacion/gimnasio').then((m) => m.PersonalizacionGimnasioComponent)
             }
         ]
         }

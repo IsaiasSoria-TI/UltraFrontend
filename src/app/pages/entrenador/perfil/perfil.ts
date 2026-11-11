@@ -6,17 +6,25 @@ import { AuthService } from '../../../services/auth.service';
 import { ThemeService } from '../../../services/theme.service';
 import { ResumenEntrenador } from '../../../models/entrenador.model';
 import { CargaComponent } from '../../../components/carga/carga';
+import { FotoPerfilEditorComponent } from '../../../components/foto-perfil-editor/foto-perfil-editor';
+import { PerfilService } from '../../../services/perfil.service';
 import { mensajeError } from '../../../utils/http-error';
 
 @Component({
   selector: 'app-entrenador-perfil',
   standalone: true,
-  imports: [RouterLink, CargaComponent],
+  imports: [RouterLink, CargaComponent, FotoPerfilEditorComponent],
   template: `
     @if (resumen(); as r) {
       <div class="flex flex-col gap-4 lg:max-w-2xl lg:gap-6">
         <header class="flex items-center gap-4">
-          <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-red-50 text-xl font-bold text-red-800 dark:bg-red-950/60 dark:text-red-300" aria-hidden="true">{{ iniciales() }}</span>
+          <span class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-red-50 text-xl font-bold text-red-800 dark:bg-red-950/60 dark:text-red-300" aria-hidden="true">
+            @if (perfil.foto(); as foto) {
+              <img [src]="foto" alt="" class="h-full w-full object-cover" />
+            } @else {
+              {{ iniciales() }}
+            }
+          </span>
           <div class="min-w-0">
             <h1 class="truncate text-2xl font-bold text-gray-900 dark:text-zinc-100">{{ r.nombre }}</h1>
             <p class="text-sm text-gray-500 dark:text-zinc-400">Entrenador</p>
@@ -29,8 +37,13 @@ import { mensajeError } from '../../../utils/http-error';
           <div class="flex justify-between gap-4 py-3"><dt class="text-gray-500 dark:text-zinc-400">Controles este mes</dt><dd class="font-medium tabular-nums text-gray-900 dark:text-zinc-100">{{ r.controlesMes }}</dd></div>
         </dl>
 
+        <section class="tarjeta flex flex-col gap-3 p-5" aria-labelledby="titulo-foto">
+          <h2 id="titulo-foto" class="text-sm font-semibold text-gray-900 dark:text-zinc-100">Foto de perfil</h2>
+          <app-foto-perfil-editor [iniciales]="iniciales()" />
+        </section>
+
         <div class="flex flex-wrap gap-3">
-          <button type="button" (click)="theme.toggle()"
+          <button type="button" (click)="perfil.alternarTema()"
             class="flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">
             <i class="pi text-sm!" [class.pi-moon]="!theme.dark()" [class.pi-sun]="theme.dark()" aria-hidden="true"></i>
             {{ theme.dark() ? 'Usar modo claro' : 'Usar modo oscuro' }}
@@ -57,6 +70,7 @@ export class EntrenadorPerfilComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   protected readonly theme = inject(ThemeService);
+  protected readonly perfil = inject(PerfilService);
 
   protected readonly usuario = this.auth.getUsername();
   protected readonly resumen = signal<ResumenEntrenador | null>(null);

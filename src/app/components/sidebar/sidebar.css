@@ -1,4 +1,5 @@
 .sidebar-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgb(255 255 255 / 0.2) transparent;
+  /* Sigue al color del texto del menú: claro sobre fondos oscuros y oscuro sobre fondos claros */
+  scrollbar-color: color-mix(in srgb, var(--marca-texto) 20%, transparent) transparent;
 }

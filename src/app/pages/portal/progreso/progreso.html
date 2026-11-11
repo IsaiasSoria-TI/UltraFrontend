@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-4 lg:gap-6">
     <header>
       <h1 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Mi progreso</h1>
-      <p class="text-sm text-gray-500 dark:text-zinc-400">Tus controles de peso registrados por tu entrenador.</p>
+      <p class="text-sm text-gray-500 dark:text-zinc-400">Tu peso y tus perímetros registrados por tu entrenador.</p>
     </header>
 
     @if (resumen(); as r) {
@@ -33,15 +33,18 @@
             <p class="text-xs text-gray-500 dark:text-zinc-400">{{ d.controles.length }} {{ d.controles.length === 1 ? 'registro' : 'registros' }}</p>
           </div>
           <ul class="tarjeta divide-y divide-gray-100 px-4 dark:divide-zinc-800">
-            @for (c of d.controles; track c.id) {
-              <li class="flex items-center justify-between gap-4 py-3">
-                <div class="min-w-0">
-                  <p class="text-sm font-medium text-gray-900 dark:text-zinc-100">{{ c.fecha | date: 'dd/MM/yyyy' }}</p>
-                  @if (c.registradoPor) {
-                    <p class="truncate text-xs text-gray-500 dark:text-zinc-400">{{ c.registradoPor }}</p>
-                  }
+            @for (c of historial(); track c.id) {
+              <li class="flex flex-col gap-2 py-3">
+                <div class="flex items-center justify-between gap-4">
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-gray-900 dark:text-zinc-100">{{ c.fecha | date: 'dd/MM/yyyy' }}</p>
+                    @if (c.registradoPor) {
+                      <p class="truncate text-xs text-gray-500 dark:text-zinc-400">{{ c.registradoPor }}</p>
+                    }
+                  </div>
+                  <span class="text-sm font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ c.peso | number: '1.1-1' }} kg</span>
                 </div>
-                <span class="text-sm font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ c.peso | number: '1.1-1' }} kg</span>
+                <app-perimetros-control [medidos]="c.medidos" />
               </li>
             }
           </ul>

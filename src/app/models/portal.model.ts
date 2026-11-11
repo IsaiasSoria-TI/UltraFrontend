@@ -1,11 +1,26 @@
 import { Entrenador, MembresiaCliente } from './cliente.model';
 import { TipoDocumento } from './acceso.model';
 
-// Control de peso (sin comentarios): fecha, peso y quién lo registró
+// Perímetros de un control en cm (un decimal); un solo lado (el derecho) en bíceps, antebrazo, muslo y pantorrilla
+export interface Perimetros {
+	cuello: number | null;
+	hombros: number | null;
+	pecho: number | null;
+	biceps: number | null;
+	antebrazo: number | null;
+	cintura: number | null;
+	abdomen: number | null;
+	cadera: number | null;
+	muslo: number | null;
+	pantorrilla: number | null;
+}
+
+// Control (sin comentarios): fecha, peso, perímetros (null si no se midió ninguno) y quién lo registró
 export interface Control {
 	id: number;
 	fecha: string;
 	peso: number;
+	perimetros: Perimetros | null;
 	registradoPor: string | null;
 }
 

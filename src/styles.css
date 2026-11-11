@@ -10,6 +10,10 @@
 :root {
   --color-marca: var(--color-red-900);
   --color-marca-hover: color-mix(in oklch, var(--color-marca), black 20%);
+  /* Menú lateral y cabeceras: color base del gimnasio. PerfilService los reemplaza (y --marca-50…950)
+     con el color que elige el administrador; el texto pasa a oscuro si el fondo es claro */
+  --marca-fondo: #7f1d1d;
+  --marca-texto: #ffffff;
 }
 
 /* Responsive: las tablas anchas se desplazan dentro de su tarjeta, no mueven toda la página */

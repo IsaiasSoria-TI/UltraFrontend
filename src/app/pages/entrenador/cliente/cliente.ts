@@ -16,13 +16,15 @@ import {
   nombreCompleto,
 } from '../../../utils/membresia-estado';
 import { abreviaturaDocumento } from '../../../utils/documento';
+import { perimetrosMedidos } from '../../../utils/perimetros';
+import { PerimetrosControlComponent } from '../../../components/perimetros-control/perimetros-control';
 import { esNoEncontrado, mensajeError } from '../../../utils/http-error';
 
 // Ficha del cliente para su entrenador (ruta /entrenador/clientes/:id)
 @Component({
   selector: 'app-entrenador-cliente',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, RouterLink, CargaComponent, EstadoMembresiaComponent, GraficoPesoComponent],
+  imports: [DatePipe, DecimalPipe, RouterLink, CargaComponent, EstadoMembresiaComponent, GraficoPesoComponent, PerimetrosControlComponent],
   templateUrl: './cliente.html',
 })
 export class EntrenadorClienteComponent {
@@ -63,6 +65,12 @@ export class EntrenadorClienteComponent {
         dias = `${diasRestantes(m)} días restantes`;
     }
     return { ...m, estado, dias };
+  });
+
+  // Cada control con sus perímetros y la variación de cada uno respecto a su medida anterior
+  protected readonly historial = computed(() => {
+    const controles = this.detalle()?.controles ?? [];
+    return controles.map((c, i) => ({ ...c, medidos: perimetrosMedidos(controles, i) }));
   });
 
   // Los controles llegan del más reciente al más antiguo

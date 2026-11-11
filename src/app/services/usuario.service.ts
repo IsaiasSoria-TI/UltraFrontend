@@ -30,6 +30,10 @@ export class UsuarioService {
 		return this.http.put<Usuario>(`${this.apiUrl}/usuarios/${id}/estado`, { estado });
 	}
 
+	eliminar(id: number): Observable<void> {
+		return this.http.delete<void>(`${this.apiUrl}/usuarios/${id}`);
+	}
+
 	restablecerContrasena(id: number, contrasena: string): Observable<void> {
 		return this.http.put<void>(`${this.apiUrl}/usuarios/${id}/contrasena`, { contrasena });
 	}

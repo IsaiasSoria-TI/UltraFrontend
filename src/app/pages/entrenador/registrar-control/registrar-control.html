@@ -6,7 +6,7 @@
   <div class="flex max-w-xl flex-col gap-4">
     <header>
       <h1 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Registrar control</h1>
-      <p class="text-sm text-gray-500 dark:text-zinc-400">Registra el peso de {{ nombre() }} para su historial de progreso.</p>
+      <p class="text-sm text-gray-500 dark:text-zinc-400">Registra el peso y los perímetros de {{ nombre() }} para su historial de progreso.</p>
     </header>
 
     @if (errorGuardar(); as e) {
@@ -51,6 +51,32 @@
           }
         </div>
       </div>
+
+      <section class="tarjeta flex flex-col gap-4 p-5" formGroupName="perimetros" role="group"
+        aria-labelledby="titulo-perimetros" aria-describedby="ayuda-perimetros">
+        <div>
+          <h2 id="titulo-perimetros" class="text-sm font-semibold text-gray-900 dark:text-zinc-100">Perímetros (cm)</h2>
+          <p id="ayuda-perimetros" class="text-xs text-gray-500 dark:text-zinc-400">
+            Opcionales: registra solo los que mediste. Bíceps, antebrazo, muslo y pantorrilla se miden en el lado derecho.
+          </p>
+        </div>
+        <div class="grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3">
+          @for (p of perimetrosDisponibles; track p.clave) {
+            <div class="flex flex-col gap-1">
+              <label [for]="'perimetro-' + p.clave" class="text-sm font-medium text-gray-700 dark:text-zinc-300">{{ p.etiqueta }}</label>
+              <input pInputText [id]="'perimetro-' + p.clave" type="number" inputmode="decimal" step="0.1"
+                [min]="perimetroMin" [max]="perimetroMax" [formControlName]="p.clave" class="w-full"
+                [placeholder]="ultimos()[p.clave] !== undefined ? 'Último: ' + (ultimos()[p.clave] | number: '1.1-1') : 'cm'"
+                [invalid]="errorPerimetro(p.clave)" [attr.aria-describedby]="'ayuda-' + p.clave" />
+              @if (errorPerimetro(p.clave)) {
+                <small [id]="'ayuda-' + p.clave" class="text-xs text-red-600 dark:text-red-400">Entre {{ perimetroMin }} y {{ perimetroMax }} cm.</small>
+              } @else {
+                <small [id]="'ayuda-' + p.clave" class="text-xs text-gray-500 dark:text-zinc-400">{{ p.ayuda }}</small>
+              }
+            </div>
+          }
+        </div>
+      </section>
 
       <div class="flex flex-wrap items-center justify-end gap-3">
         <a [routerLink]="['/entrenador/clientes', d.cliente.id]"

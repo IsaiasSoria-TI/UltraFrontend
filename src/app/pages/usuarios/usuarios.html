@@ -1,4 +1,5 @@
 <p-toast position="top-right" />
+<p-confirmdialog [style]="{ width: '28rem' }" />
 
 <div class="flex min-h-[calc(100dvh-3.5rem)] w-full flex-col gap-4 px-4 py-6 sm:px-6 lg:min-h-dvh lg:px-8">
   <div class="flex flex-wrap items-center justify-between gap-3">
@@ -56,20 +57,20 @@
         <ng-template #header>
           <tr>
             <th pSortableColumn="nombre">Persona <p-sorticon field="nombre" /></th>
-            <th pSortableColumn="usuario">Usuario <p-sorticon field="usuario" /></th>
+            <th pSortableColumn="correo">Correo (inicio de sesión) <p-sorticon field="correo" /></th>
             <th pSortableColumn="rol">Rol <p-sorticon field="rol" /></th>
             <th>Activo</th>
-            <th class="w-28 text-right!">Acciones</th>
+            <th class="w-36 text-right!">Acciones</th>
           </tr>
         </ng-template>
         <ng-template #body let-u>
           <tr [class.opacity-60]="!u.estado">
             <td>
               <p class="font-medium text-gray-900 dark:text-zinc-100">{{ nombreCompleto(u) }}</p>
-              <p class="text-xs text-gray-500 dark:text-zinc-400">{{ u.correo }} · DNI {{ u.dni }}</p>
+              <p class="text-xs text-gray-500 dark:text-zinc-400">{{ u.dni ? 'DNI ' + u.dni : 'Sin DNI' }}</p>
             </td>
             <td class="text-gray-700 dark:text-zinc-300">
-              {{ u.usuario }}
+              {{ u.correo }}
               @if (u.usuario === usuarioActual) {
                 <span class="ml-1 text-xs text-gray-500 dark:text-zinc-400">(tú)</span>
               }
@@ -77,12 +78,14 @@
             <td><p-tag [severity]="severidadRol(u.rol)" [value]="u.rol" /></td>
             <td>
               <p-toggleswitch [ngModel]="u.estado" (ngModelChange)="cambiarEstado(u, $event)"
-                [disabled]="u.usuario === usuarioActual" [ariaLabel]="(u.estado ? 'Desactivar ' : 'Activar ') + u.usuario" />
+                [disabled]="u.usuario === usuarioActual" [ariaLabel]="(u.estado ? 'Desactivar a ' : 'Activar a ') + nombreCompleto(u)" />
             </td>
             <td>
               <div class="flex justify-end gap-1">
-                <app-boton-icono accion="editar" [etiqueta]="'Editar ' + u.usuario" tooltip="Editar" (clic)="abrirEditar(u)" />
-                <app-boton-icono accion="clave" [etiqueta]="'Restablecer contraseña de ' + u.usuario" tooltip="Restablecer contraseña" (clic)="abrirClave(u)" />
+                <app-boton-icono accion="editar" [etiqueta]="'Editar a ' + nombreCompleto(u)" tooltip="Editar" (clic)="abrirEditar(u)" />
+                <app-boton-icono accion="clave" [etiqueta]="'Restablecer contraseña de ' + nombreCompleto(u)" tooltip="Restablecer contraseña" (clic)="abrirClave(u)" />
+                <app-boton-icono accion="eliminar" [etiqueta]="'Eliminar a ' + nombreCompleto(u)" tooltip="Eliminar"
+                  [deshabilitado]="u.usuario === usuarioActual" (clic)="confirmarEliminacion(u)" />
               </div>
             </td>
           </tr>
@@ -101,6 +104,40 @@
 <p-dialog [(visible)]="formVisible" [header]="editando() ? 'Editar usuario' : 'Nuevo usuario'" [modal]="true"
   [draggable]="false" [style]="{ width: '40rem' }" [breakpoints]="{ '640px': '95vw' }">
   <form [formGroup]="form" (ngSubmit)="guardar()" class="grid grid-cols-1 gap-4 pt-1 sm:grid-cols-2" novalidate>
+    <!-- El DNI va primero: al consultarlo se autocompletan nombre y apellidos -->
+    <div class="flex flex-col gap-1.5">
+      <div class="flex items-center justify-between gap-2">
+        <label for="u-dni" class="text-sm font-medium text-gray-700 dark:text-zinc-300">DNI</label>
+        @if (!editando()) {
+          <button type="button" (click)="dni.consultar()" [disabled]="!dni.puedeConsultar()"
+            class="inline-flex cursor-pointer items-center gap-1 text-xs font-semibold text-red-800 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline dark:text-red-400 dark:disabled:text-zinc-600"
+            aria-label="Consultar datos del DNI" title="Autocompletar nombre y apellidos con el DNI">
+            <i [class]="dni.consultando() ? 'pi pi-spinner pi-spin' : 'pi pi-search'" class="text-xs!" aria-hidden="true"></i>
+            Consultar
+          </button>
+        }
+      </div>
+      <p-iconfield class="w-full">
+        <input pInputText id="u-dni" formControlName="dni" inputmode="numeric" maxlength="8" autocomplete="off" class="w-full"
+          [invalid]="invalido('dni')" [attr.aria-busy]="dni.consultando()" />
+        @if (dni.consultando()) {
+          <p-inputicon class="pi pi-spinner pi-spin" aria-label="Buscando datos del DNI" />
+        }
+      </p-iconfield>
+      @if (invalido('dni')) {
+        <small class="text-red-600 dark:text-red-400">Debe tener 8 dígitos, o déjalo vacío.</small>
+      } @else if (dni.aviso(); as a) {
+        @if (a.tipo === 'autocompletado') {
+          <small class="text-gray-500 dark:text-zinc-400"><i class="pi pi-check mr-1 text-xs!" aria-hidden="true"></i>{{ a.texto }}</small>
+        } @else {
+          <small class="text-amber-700 dark:text-amber-400">{{ a.texto }}</small>
+        }
+      } @else if (dni.consultando()) {
+        <small class="text-gray-500 dark:text-zinc-400">Buscando datos del DNI…</small>
+      } @else if (!editando()) {
+        <small class="text-gray-500 dark:text-zinc-400">Opcional. Con el DNI se autocompletan nombre y apellidos.</small>
+      }
+    </div>
     <div class="flex flex-col gap-1.5">
       <label for="u-nombre" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Nombre *</label>
       <input pInputText id="u-nombre" formControlName="nombre" autocomplete="off" [invalid]="invalido('nombre')" />
@@ -114,15 +151,13 @@
       <input pInputText id="u-am" formControlName="apellidoMaterno" autocomplete="off" />
     </div>
     <div class="flex flex-col gap-1.5">
-      <label for="u-dni" class="text-sm font-medium text-gray-700 dark:text-zinc-300">DNI *</label>
-      <input pInputText id="u-dni" formControlName="dni" inputmode="numeric" maxlength="8" autocomplete="off" [invalid]="invalido('dni')" />
-      @if (invalido('dni')) {
-        <small class="text-red-600 dark:text-red-400">Debe tener 8 dígitos.</small>
-      }
-    </div>
-    <div class="flex flex-col gap-1.5">
       <label for="u-correo" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Correo *</label>
-      <input pInputText id="u-correo" type="email" formControlName="correo" autocomplete="off" [invalid]="invalido('correo')" />
+      <input pInputText id="u-correo" type="email" formControlName="correo" autocomplete="off" maxlength="100" [invalid]="invalido('correo')" />
+      @if (invalido('correo')) {
+        <small class="text-red-600 dark:text-red-400">Ingresa un correo válido (máximo 100 caracteres).</small>
+      } @else {
+        <small class="text-gray-500 dark:text-zinc-400">Con este correo iniciará sesión.</small>
+      }
     </div>
     <div class="flex flex-col gap-1.5">
       <label for="u-cel" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Celular</label>
@@ -133,19 +168,12 @@
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label for="u-usuario" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Usuario (para iniciar sesión) *</label>
-      <input pInputText id="u-usuario" formControlName="usuario" autocomplete="off" [invalid]="invalido('usuario')" />
-      @if (invalido('usuario')) {
-        <small class="text-red-600 dark:text-red-400">3 a 100 caracteres: letras, números y . _ &#64; -</small>
-      }
-    </div>
-    <div class="flex flex-col gap-1.5">
       <label for="u-rol" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Rol *</label>
       <p-select inputId="u-rol" formControlName="idRol" [options]="roles()" optionLabel="nombre" optionValue="id"
         placeholder="Selecciona" appendTo="body" [invalid]="invalido('idRol')" class="w-full" />
     </div>
     @if (!editando()) {
-      <div class="flex flex-col gap-1.5 sm:col-span-2">
+      <div class="flex flex-col gap-1.5">
         <label for="u-clave" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Contraseña inicial *</label>
         <p-password inputId="u-clave" formControlName="contrasena" [feedback]="false" [toggleMask]="true"
           autocomplete="new-password" [invalid]="invalido('contrasena')" styleClass="w-full" inputStyleClass="w-full" />
@@ -168,7 +196,7 @@
   [style]="{ width: '26rem' }" [breakpoints]="{ '640px': '95vw' }">
   @if (usuarioClave(); as u) {
     <p class="mb-3 text-sm text-gray-600 dark:text-zinc-400">
-      Usuario: <span class="font-medium text-gray-900 dark:text-zinc-100">{{ u.usuario }}</span>
+      {{ nombreCompleto(u) }} · <span class="font-medium text-gray-900 dark:text-zinc-100">{{ u.correo }}</span>
     </p>
   }
   <label for="nueva-clave" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-zinc-300">Nueva contraseña *</label>

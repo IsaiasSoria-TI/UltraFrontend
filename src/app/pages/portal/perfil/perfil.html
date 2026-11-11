@@ -1,7 +1,13 @@
 @if (store.datos(); as d) {
   <div class="flex flex-col gap-4 lg:max-w-2xl lg:gap-6">
     <header class="flex items-center gap-4">
-      <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-red-50 text-xl font-bold text-red-800 dark:bg-red-950/60 dark:text-red-300" aria-hidden="true">{{ store.iniciales() }}</span>
+      <span class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-red-50 text-xl font-bold text-red-800 dark:bg-red-950/60 dark:text-red-300" aria-hidden="true">
+        @if (perfil.foto(); as foto) {
+          <img [src]="foto" alt="" class="h-full w-full object-cover" />
+        } @else {
+          {{ store.iniciales() }}
+        }
+      </span>
       <div class="min-w-0">
         <h1 class="truncate text-2xl font-bold text-gray-900 dark:text-zinc-100">{{ nombreCompleto(d.perfil) }}</h1>
         <p class="text-sm text-gray-500 dark:text-zinc-400">Cliente desde {{ d.perfil.fechaRegistro | date: 'dd/MM/yyyy' }}</p>
@@ -18,8 +24,13 @@
     </section>
     <p class="text-xs text-gray-500 dark:text-zinc-400">¿Algún dato está mal? Pide en recepción que lo corrijan.</p>
 
+    <section class="tarjeta flex flex-col gap-3 p-5" aria-labelledby="titulo-foto">
+      <h2 id="titulo-foto" class="text-sm font-semibold text-gray-900 dark:text-zinc-100">Foto de perfil</h2>
+      <app-foto-perfil-editor [iniciales]="store.iniciales()" />
+    </section>
+
     <div class="flex flex-wrap gap-3">
-      <button type="button" (click)="theme.toggle()"
+      <button type="button" (click)="perfil.alternarTema()"
         class="flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">
         <i class="pi text-sm!" [class.pi-moon]="!theme.dark()" [class.pi-sun]="theme.dark()" aria-hidden="true"></i>
         {{ theme.dark() ? 'Usar modo claro' : 'Usar modo oscuro' }}

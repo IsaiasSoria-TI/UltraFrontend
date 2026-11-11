@@ -39,11 +39,13 @@ export interface Rol {
 
 export interface Usuario {
 	id: number;
+	// Nombre interno de la sesión; para el personal es su correo
 	usuario: string;
 	nombre: string;
 	apellidoPaterno: string | null;
 	apellidoMaterno: string | null;
-	dni: string;
+	// Opcional para el personal
+	dni: string | null;
 	correo: string;
 	celular: string | null;
 	idRol: number;
@@ -55,10 +57,9 @@ export interface UsuarioRequest {
 	nombre: string;
 	apellidoPaterno: string;
 	apellidoMaterno: string | null;
-	dni: string;
+	dni: string | null;
 	correo: string;
 	celular: string | null;
-	usuario: string;
 	idRol: number;
 	// solo al crear
 	contrasena: string | null;

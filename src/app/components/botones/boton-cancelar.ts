@@ -7,12 +7,13 @@ import { ButtonModule } from 'primeng/button';
   standalone: true,
   imports: [ButtonModule],
   template: `
-    <button pButton type="button" severity="secondary" [outlined]="true" (click)="clic.emit()">
+    <button pButton type="button" severity="secondary" [outlined]="true" [disabled]="deshabilitado()" (click)="clic.emit()">
       {{ texto() }}
     </button>
   `,
 })
 export class BotonCancelarComponent {
   readonly texto = input('Cancelar');
+  readonly deshabilitado = input(false);
   readonly clic = output<void>();
 }

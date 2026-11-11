@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { MessageService } from 'primeng/api';
@@ -9,6 +9,15 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { EntrenadorService } from '../../../services/entrenador.service';
 import { DetalleClienteAsignado } from '../../../models/entrenador.model';
+import { Perimetros } from '../../../models/portal.model';
+import {
+  ClavePerimetro,
+  PERIMETRO_MAX,
+  PERIMETRO_MIN,
+  PERIMETROS,
+  redondear,
+  ultimosPerimetros,
+} from '../../../utils/perimetros';
 import { CargaComponent } from '../../../components/carga/carga';
 import { nombreCompleto } from '../../../utils/membresia-estado';
 import { fechaIso, mensajeError } from '../../../utils/http-error';
@@ -26,7 +35,7 @@ function fechaEnRango(min: () => string, max: string) {
   };
 }
 
-// Control de peso: solo fecha y peso, sin comentarios
+// Control: fecha, peso y perímetros opcionales, sin comentarios
 @Component({
   selector: 'app-registrar-control',
   standalone: true,
@@ -58,9 +67,24 @@ export class RegistrarControlComponent {
     return d ? fechaIso(new Date(d.fechaRegistro)) : '';
   });
 
+  protected readonly perimetrosDisponibles = PERIMETROS;
+  protected readonly perimetroMin = PERIMETRO_MIN;
+  protected readonly perimetroMax = PERIMETRO_MAX;
+  // Última medida de cada perímetro, como referencia junto a cada campo
+  protected readonly ultimos = computed(() => ultimosPerimetros(this.detalle()?.controles ?? []));
+
   protected readonly form = this.fb.nonNullable.group({
     fecha: [this.hoy, [Validators.required, fechaEnRango(() => this.fechaMinima(), this.hoy)]],
     peso: [null as number | null, [Validators.required, Validators.min(20), Validators.max(400)]],
+    // Todos opcionales
+    perimetros: new FormGroup(
+      Object.fromEntries(
+        PERIMETROS.map(({ clave }) => [
+          clave,
+          new FormControl<number | null>(null, [Validators.min(PERIMETRO_MIN), Validators.max(PERIMETRO_MAX)]),
+        ]),
+      ) as Record<ClavePerimetro, FormControl<number | null>>,
+    ),
   });
 
   constructor() {
@@ -82,6 +106,23 @@ export class RegistrarControlComponent {
     return control.invalid && (control.touched || this.enviado());
   }
 
+  protected errorPerimetro(clave: ClavePerimetro): boolean {
+    const control = this.form.controls.perimetros.controls[clave];
+    return control.invalid && (control.touched || this.enviado());
+  }
+
+  // Solo los perímetros indicados; null si no se midió ninguno
+  private perimetrosAEnviar(): Perimetros | null {
+    const valores = this.form.controls.perimetros.getRawValue();
+    const perimetros = Object.fromEntries(
+      PERIMETROS.map(({ clave }) => {
+        const v = valores[clave];
+        return [clave, v === null || (v as unknown) === '' ? null : redondear(v)];
+      }),
+    ) as unknown as Perimetros;
+    return Object.values(perimetros).some((v) => v !== null) ? perimetros : null;
+  }
+
   protected async guardar(): Promise<void> {
     if (this.guardando()) return;
     this.enviado.set(true);
@@ -94,7 +135,11 @@ export class RegistrarControlComponent {
     this.guardando.set(true);
     try {
       // Hasta 2 decimales, como la columna de la base de datos
-      await firstValueFrom(this.service.registrarControl(this.idCliente, { fecha, peso: Math.round(peso! * 100) / 100 }));
+      await firstValueFrom(this.service.registrarControl(this.idCliente, {
+        fecha,
+        peso: Math.round(peso! * 100) / 100,
+        perimetros: this.perimetrosAEnviar(),
+      }));
       this.messages.add({ severity: 'success', summary: 'Control registrado', detail: `${this.nombre()} ya puede verlo en su portal.`, life: 3500 });
       await this.router.navigate(['/entrenador/clientes', this.idCliente]);
     } catch (e) {

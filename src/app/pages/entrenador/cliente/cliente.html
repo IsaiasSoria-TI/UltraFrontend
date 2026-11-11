@@ -76,15 +76,18 @@
         <h2 id="titulo-historial" class="text-lg font-semibold text-gray-900 dark:text-zinc-100">Historial de controles</h2>
         @if (d.controles.length) {
           <ul class="tarjeta divide-y divide-gray-100 px-4 dark:divide-zinc-800">
-            @for (c of d.controles; track c.id) {
-              <li class="flex items-center justify-between gap-4 py-3">
-                <div class="min-w-0">
-                  <p class="text-sm font-medium text-gray-900 dark:text-zinc-100">{{ c.fecha | date: 'dd/MM/yyyy' }}</p>
-                  @if (c.registradoPor) {
-                    <p class="truncate text-xs text-gray-500 dark:text-zinc-400">{{ c.registradoPor }}</p>
-                  }
+            @for (c of historial(); track c.id) {
+              <li class="flex flex-col gap-2 py-3">
+                <div class="flex items-center justify-between gap-4">
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-gray-900 dark:text-zinc-100">{{ c.fecha | date: 'dd/MM/yyyy' }}</p>
+                    @if (c.registradoPor) {
+                      <p class="truncate text-xs text-gray-500 dark:text-zinc-400">{{ c.registradoPor }}</p>
+                    }
+                  </div>
+                  <span class="text-sm font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ c.peso | number: '1.1-1' }} kg</span>
                 </div>
-                <span class="text-sm font-semibold tabular-nums text-gray-900 dark:text-zinc-100">{{ c.peso | number: '1.1-1' }} kg</span>
+                <app-perimetros-control [medidos]="c.medidos" />
               </li>
             }
           </ul>

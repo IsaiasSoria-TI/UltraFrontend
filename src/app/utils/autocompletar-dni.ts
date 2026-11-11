@@ -16,14 +16,24 @@ export interface AvisoDni {
 
 const CAMPOS_NOMBRE = ['nombre', 'apellidoPaterno', 'apellidoMaterno'] as const;
 
+export interface OpcionesAutocompletarDni {
+  // Nombre del control con el número de documento
+  campoDocumento?: string;
+  // Nombre del control con el tipo de documento; null si el formulario solo admite DNI
+  campoTipo?: string | null;
+  // A quién hay que pedirle que verifique los datos autocompletados
+  verificarCon?: string;
+}
+
 /**
- * Autocompleta nombre y apellidos con el DNI cuando la recepcionista pulsa "Consultar" (no es
+ * Autocompleta nombre y apellidos con el DNI cuando el usuario pulsa "Consultar" (no es
  * automático: cada consulta gasta del plan de apiperu.dev). Una consulta nueva cancela la anterior.
  * Si falla, los campos quedan vacíos y habilitados para escribir a mano. Llamar en un contexto de
- * inyección; el grupo debe tener los controles tipoDocumento, numeroDocumento, nombre,
- * apellidoPaterno y apellidoMaterno.
+ * inyección; el grupo debe tener los controles nombre, apellidoPaterno y apellidoMaterno, el del
+ * número de documento y, si se usa, el del tipo (por defecto: tipoDocumento y numeroDocumento).
  */
-export function autocompletarDni(form: FormGroup, activo: () => boolean) {
+export function autocompletarDni(form: FormGroup, activo: () => boolean, opciones: OpcionesAutocompletarDni = {}) {
+  const { campoDocumento = 'numeroDocumento', campoTipo = 'tipoDocumento', verificarCon = 'el cliente' } = opciones;
   const clienteService = inject(ClienteService);
   const destroyRef = inject(DestroyRef);
   const consultando = signal(false);
@@ -35,8 +45,8 @@ export function autocompletarDni(form: FormGroup, activo: () => boolean) {
     form.valueChanges.pipe(
       startWith(null),
       map(() => ({
-        tipo: form.get('tipoDocumento')?.value,
-        numero: String(form.get('numeroDocumento')?.value ?? '').trim(),
+        tipo: campoTipo ? form.get(campoTipo)?.value : 'DNI',
+        numero: String(form.get(campoDocumento)?.value ?? '').trim(),
       })),
     ),
     { requireSync: true },
@@ -54,7 +64,7 @@ export function autocompletarDni(form: FormGroup, activo: () => boolean) {
     return clienteService.consultarDni(dni).pipe(
       tap((d) => {
         form.patchValue({ nombre: d.nombres ?? '', apellidoPaterno: d.apellidoPaterno ?? '', apellidoMaterno: d.apellidoMaterno ?? '' });
-        aviso.set({ tipo: 'autocompletado', texto: 'Datos obtenidos automáticamente. Verifícalos con el cliente.' });
+        aviso.set({ tipo: 'autocompletado', texto: `Datos obtenidos automáticamente. Verifícalos con ${verificarCon}.` });
       }),
       catchError((e: unknown) => {
         if (e instanceof HttpErrorResponse && e.status === 409) {
@@ -74,7 +84,7 @@ export function autocompletarDni(form: FormGroup, activo: () => boolean) {
   solicitudes.pipe(switchMap((dni) => consultar(dni)), takeUntilDestroyed(destroyRef)).subscribe();
 
   // El aviso corresponde al número consultado: se quita al cambiarlo
-  form.get('numeroDocumento')!.valueChanges.pipe(takeUntilDestroyed(destroyRef)).subscribe(() => {
+  form.get(campoDocumento)!.valueChanges.pipe(takeUntilDestroyed(destroyRef)).subscribe(() => {
     if (!consultando()) aviso.set(null);
   });
 

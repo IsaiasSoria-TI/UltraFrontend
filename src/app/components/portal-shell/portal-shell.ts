@@ -1,6 +1,7 @@
 import { Component, inject, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
+import { PerfilService } from '../../services/perfil.service';
 
 export interface OpcionPortal {
   label: string;
@@ -11,7 +12,7 @@ export interface OpcionPortal {
 }
 
 /**
- * Marco de los portales de clientes y entrenadores (diseño de Figma): cabecera roja con el menú en
+ * Marco de los portales de clientes y entrenadores (diseño de Figma): cabecera con el color del gimnasio y el menú en
  * escritorio y barra inferior en móvil. El contenido de 976 px va centrado.
  */
 @Component({
@@ -19,24 +20,24 @@ export interface OpcionPortal {
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
   template: `
-    <header class="fixed inset-x-0 top-0 z-40 bg-red-900 text-white shadow-md dark:bg-red-950">
+    <header class="fixed inset-x-0 top-0 z-40 bg-(--marca-fondo) text-(--marca-texto) shadow-md">
       <div class="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4 lg:h-16 lg:px-6">
         <svg class="h-7 w-7 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#F5A623" />
         </svg>
-        <span class="text-base font-black uppercase tracking-tight">Ultratech</span>
+        <span class="min-w-0 truncate text-base font-black uppercase tracking-tight">{{ perfil.nombreGimnasio() }}</span>
         @if (etiqueta()) {
-          <span class="ml-1 rounded-full bg-white/15 px-2 py-0.5 text-xs font-semibold">{{ etiqueta() }}</span>
+          <span class="ml-1 rounded-full bg-(--marca-texto)/15 px-2 py-0.5 text-xs font-semibold">{{ etiqueta() }}</span>
         }
 
         <nav class="ml-6 hidden items-center gap-1 lg:flex" aria-label="Menú principal">
           @for (o of opciones(); track o.ruta) {
             <a
               [routerLink]="o.ruta"
-              routerLinkActive="bg-white/15 text-white!"
+              routerLinkActive="bg-(--marca-texto)/15 text-(--marca-texto)!"
               [routerLinkActiveOptions]="{ exact: !!o.exacta }"
               ariaCurrentWhenActive="page"
-              class="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-red-100 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-white/60"
+              class="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-(--marca-texto)/85 hover:bg-(--marca-texto)/10 hover:text-(--marca-texto) focus-visible:outline-2 focus-visible:outline-(--marca-texto)/60"
             >
               <i [class]="o.icono + ' text-sm!'" aria-hidden="true"></i>{{ o.label }}
             </a>
@@ -46,18 +47,22 @@ export interface OpcionPortal {
         <span class="flex-1"></span>
         <button
           type="button"
-          (click)="theme.toggle()"
+          (click)="perfil.alternarTema()"
           [attr.aria-label]="theme.dark() ? 'Usar modo claro' : 'Usar modo oscuro'"
-          class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white/60"
+          class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg hover:bg-(--marca-texto)/10 focus-visible:outline-2 focus-visible:outline-(--marca-texto)/60"
         >
           <i class="pi" [class.pi-moon]="!theme.dark()" [class.pi-sun]="theme.dark()" aria-hidden="true"></i>
         </button>
         <a
           [routerLink]="rutaPerfil()"
           aria-label="Mi perfil"
-          class="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-semibold text-red-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
+          class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-(--marca-texto) text-xs font-semibold text-(--marca-fondo) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--marca-texto)/60"
         >
-          {{ iniciales() }}
+          @if (perfil.foto(); as foto) {
+            <img [src]="foto" alt="" class="h-full w-full object-cover" />
+          } @else {
+            {{ iniciales() }}
+          }
         </a>
       </div>
     </header>
@@ -89,6 +94,12 @@ export interface OpcionPortal {
 })
 export class PortalShellComponent {
   protected readonly theme = inject(ThemeService);
+  // Color del gimnasio (lo define el administrador), modo y foto del usuario
+  protected readonly perfil = inject(PerfilService);
+
+  constructor() {
+    this.perfil.asegurarCargado();
+  }
 
   readonly opciones = input.required<OpcionPortal[]>();
   readonly iniciales = input('');
